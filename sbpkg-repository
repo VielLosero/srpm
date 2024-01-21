@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+
+
+info(){
+REPO_CONFIG_FILE="sbpkg.source.repositories"
+#get repo tags from repo config file 
+REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
+#clear
+echo "------------------------"
+echo "- Repository information"
+for TAG in $REPO_TAGS ; do  
+  REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+  REPO_ACTIVE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ACTIVE" | cut -d= -f2 | tr -d '"')
+  REPO_MIRROR=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_MIRROR" | cut -d= -f2 | tr -d '"')
+  # Process repo type
+  SOURCE_TYPE="$(echo $REPO_MIRROR | cut -d: -f1 )"
+  # echo "SOURCE TYPE: $SOURCE_TYPE"
+  case $SOURCE_TYPE in
+    file)
+      SOURCE="$(echo $REPO_MIRROR | sed 's%file://%%')"
+      REPO_UPDATE="$(cat ${SOURCE}ChangeLog.txt  | head -1)"
+      REPO_PKGS="$(grep slack-desc ${SOURCE}/CHECKSUMS.md5 | wc -l )"     
+      ;;
+    http|https)
+      SOURCE=$(echo $REPO_MIRROR)
+      REPO_UPDATE="$(curl --connect-timeout 6 -s ${SOURCE}ChangeLog.txt | head -n1  || echo fail )"
+      REPO_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
+      ;;
+    ftp)
+      SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
+      ;;
+    rsync)
+      SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
+      ;;
+    git)
+      SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
+      ;;
+  esac
+  #echo "SOURCE: $SOURCE"
+  echo "------------------------"
+  cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
+  echo "REPO_${TAG}_UPDATE=\"$REPO_UPDATE\""
+  echo "REPO_${TAG}_PKGS=\"$REPO_PKGS\""
+done
+}
+
+
+
+while [ -n "$1" ] ; do
+  case $1 in  
+    info)
+      shift
+      info
+      ;;
+    update)
+      ;;
+    select)
+      ;;
+    *)
+      echo "USAGE:"
+      echo "      $0 : "
+      shift $#
+      ;;
+  esac
+done

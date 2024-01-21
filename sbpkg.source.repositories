@@ -1,0 +1,15 @@
+# Source file with repositories for sbpkg
+#
+# SBo repository for Slackware 15.0 stable.
+REPO_SB_NAME="sbo"
+REPO_SB_ACTIVE="true"
+REPO_SB_PRIORITY="10"
+REPO_SB_MIRROR="file:///opt/slackware-repositories/slackbuilds/15.0/"
+
+# Ponce repository for Slackware -current.
+REPO_PONCE_NAME="ponce"
+REPO_PONCE_ACTIVE="false"
+REPO_PONCE_PRIORITY="20"
+REPO_PONCE_MIRROR="https://cgit.ponce.cc/slackbuilds/plain/"
+
+

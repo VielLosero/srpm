@@ -1,0 +1,13 @@
+#!/bin/bash
+
+TMPDIR=$(mktemp -d)
+
+mkdir -vp ${TMPDIR}/usr/sbin
+mkdir -vp ${TEMPDIR}/etc/sbpkg
+mkdir -vp ${TEMPDIR}/usr/libexec/sbpkg
+
+cp sbpkg ${TMPDIR}/usr/sbin
+cp sbpkg.config ${TEMPDIR}/etc/sbpkg
+cp sbpkg.repositories ${TEMPDIR}/etc/sbpkg
+cp sbpkg-package ${TEMPDIR}/usr/libexec/sbpkg
+cp sbpkg-repository ${TEMPDIR}/usr/libexec/sbpkg

@@ -2,7 +2,7 @@
 
 # get repo to check 
 #REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
-REPO_CONFIG_FILE="sbpkg.source.repositories"
+REPO_CONFIG_FILE="sbpkg.repositories"
 #. $REPO_CONFIG_FILE
 
 #export $(ash $REPO_CONFIG_FILE | grep ^REPO_)

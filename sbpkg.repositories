@@ -1,0 +1,39 @@
+# Source file with repositories for sbpkg
+# 
+#
+# SOURCE --> donde se consulta para los otros programas
+#           si ponemos http consultaremos via http
+#
+# SBo repository for Slackware 15.0 stable.
+REPO_SBO_NAME="sbo"
+REPO_SBO_ACTIVE="true"
+REPO_SBO_PRIORITY="10"
+REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
+REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
+## SBo repository for Slackware 15.0 stable.
+#REPO_SBO_NAME="sbo"
+#REPO_SBO_ACTIVE="true"
+#REPO_SBO_PRIORITY="10"
+#REPO_SBO_PREFIX="/slackbuilds"
+#REPO_SBO_VERSION="/15.0"
+#REPO_SBO_FTP="ftp://slackbuilds.org/slackbuilds/15.0"
+#REPO_SBO_RSYNC="rsync://slackbuilds.org/slackbuilds/15.0"
+#REPO_SBO_HTTPS="https://slackbuilds.org/slackbuilds/15.0"
+#REPO_SBO_MIRROR="rsync" # black or no for disactivate
+#REPO_SBO_LOCALMIRROR="file:///opt/slackware-repositories/slackbuilds/15.0"
+#REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
+#REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
+
+## # Ponce repository for Slackware -current.
+## REPO_PONCE_NAME="ponce"
+## REPO_PONCE_ACTIVE="false"
+## REPO_PONCE_PRIORITY="20"
+## REPO_PONCE_GIT="https://cgit.ponce.cc/slackbuilds/plain/"
+## 
+## # Oficial repo from Slackbuilds
+## https://slackbuilds.org/slackbuilds/15.0/
+## 
+## REPO_SBO-HTTPS_NAME="sbo-https"
+## REPO_SBO-HTTPS_ACTIVE="false"
+## REPO_SBO-HTTPS_PRIORITY="30"
+## REPO_SBO-HTTPS_MIRROR="https://slackbuilds.org/slackbuilds/15.0/"

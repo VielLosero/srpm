@@ -1,13 +1,25 @@
 #!/bin/bash
 
+set -e
+
+# change to current dir 
+cd $(dirname $0) ; CWD=$(pwd)
+
+# use temp dir to make package
 TMPDIR=$(mktemp -d)
 
 mkdir -vp ${TMPDIR}/usr/sbin
-mkdir -vp ${TEMPDIR}/etc/sbpkg
-mkdir -vp ${TEMPDIR}/usr/libexec/sbpkg
+mkdir -vp ${TMPDIR}/etc/sbpkg
+mkdir -vp ${TMPDIR}/usr/libexec/sbpkg
 
 cp sbpkg ${TMPDIR}/usr/sbin
-cp sbpkg.config ${TEMPDIR}/etc/sbpkg
-cp sbpkg.repositories ${TEMPDIR}/etc/sbpkg
-cp sbpkg-package ${TEMPDIR}/usr/libexec/sbpkg
-cp sbpkg-repository ${TEMPDIR}/usr/libexec/sbpkg
+cp sbpkg.config.new ${TMPDIR}/etc/sbpkg
+cp sbpkg.repositories.new ${TMPDIR}/etc/sbpkg
+cp sbpkg-package ${TMPDIR}/usr/libexec/sbpkg
+cp sbpkg-repository ${TMPDIR}/usr/libexec/sbpkg
+cp -r install ${TMPDIR}
+
+cd ${TMPDIR}
+
+makepkg sbpkg-0.1.0-noarch-1.txz
+

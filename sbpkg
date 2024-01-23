@@ -1,47 +1,117 @@
 #!/bin/bash
 
-# get repo to check 
-#REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
-REPO_CONFIG_FILE="sbpkg.repositories"
-#. $REPO_CONFIG_FILE
-
-#export $(ash $REPO_CONFIG_FILE | grep ^REPO_)
-#printenv  | grep REPO
-#printenv
-
-
-# get repositories information
-REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-#echo $REPO_TAGS  
 #
-
-while [ -n "$1" ] ; do
+if [ $# -eq 0 ]; then
+  #show usage
+  $0 usage
+fi
+CMD=""
+#while [ -n "$1" ] ; do
+while [ -z "$CMD" ] ; do
   case $1 in
-    -ri|repo-info|reposiroty-info)
+    -r|repo|reposiroty)
+      shift
+      case $1 in 
+        i|info)
+          shift
+          CMD=repository-info
+          ;;
+        u|update)
+          shift
+          CMD=repository-update
+          ;;
+        *) $0 usage
+          ;;
+      esac
+      shift $#
+      ;;
+    -ri|-rinfo|repository-info)
       shift
       CMD=repository-info
       shift $#
       ;;
-    -pi|pkg-info|package-info)
+    -ru|-rupdate|repository-update)
       shift
-      CMD=package-info
-      
+      CMD=repository-update
+      shift $#
       ;;
-    -ip|install-pkg|info-package)
+    -p|pkg|package)
       shift
-      CMD=info-package
+      case $1 in 
+        i|install)
+          shift
+          CMD=package-install
+          ;;
+        r|remove)
+          shift
+          CMD=package-remove
+          ;;
+        s|search)
+          shift
+          CMD=package-search
+          ;;
+        sf|search-file)
+          shift
+          CMD=package-search-file
+          ;;
+        d|des|description)
+          shift
+          CMD=package-description
+          ;;
+        n|need|needed)
+          shift
+          CMD=package-needed
+          ;;
+        u|up|upgrade)
+          shift
+          CMD=package-upgrade
+          ;;
+        m|mirror)
+          shift
+          CMD=package-upgrade
+          ;;
+        *) $0 usage
+          ;;
+      esac
+      #shift $#
       ;;
-    -p|pkg) 
+    -pi|package-install)
       shift
-      PKG=$1
-      echo "Searching for package $PKG." && shift
+      CMD=package-install
       ;;
-  
-  
+    -pr|package-remove) 
+      shift
+      CMD=package-remove
+      ;;
+    -ps|package-search) 
+      shift
+      CMD=package-search
+      ;;
+    -psf|package-search-file) 
+      shift
+      CMD=package-search-file
+      ;;
+    -pd|package-description) 
+      shift
+      CMD=package-description
+      ;;
+    -pn|package-needed) 
+      shift
+      CMD=package-needed
+      ;;
+    -pu|package-upgrade) 
+      shift
+      CMD=package-upgrade
+      ;;
+    -pm|package-mirror) 
+      shift
+      CMD=package-mirror
+      ;;
     *)
-    echo "USAGE:"
-    echo "      $0 : {-ri|repo-info|reposiroty-info} Show repository info"
-    echo "      $0 : {-pi|pkg-info|package-info} Show package slack-desc"
+    echo "Usage:"
+    echo "      $0 : {-r|repo|reposiroty} {i|info u|update}"
+    echo "      $0 : {-p|pkg|package} {i|install r|remove s|search sf|search-file}"
+    echo "      $0 :                  {d|description n|needed u|up|upgrade m|mirror}"
     exit 0
     ;;
 
@@ -52,56 +122,34 @@ done
 # Case with the comamnds
 case "$CMD" in
   repository-info)
-    sbpkg-repository info
-#
-#    #get repo tags from repo config file 
-#    REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-#    #clear
-#    
-#    #  printf '| %10.10s| %10.10s| %60.60s| %30.30s| %10.10s|\n'   Repo_name Is_Active Mirror Last_update Packages  
-#    #  printf '| %10.10s| %10.10s| %60.60s| %30.30s| %10.10s|\n'   ---------- ---------- ----------------------------------------------------------- ------------- ------------  
-#      echo "------------------------"
-#      echo "- Repository information"
-#    for TAG in $REPO_TAGS ; do  
-#      REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-#      REPO_ACTIVE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ACTIVE" | cut -d= -f2 | tr -d '"')
-#      REPO_MIRROR=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_MIRROR" | cut -d= -f2 | tr -d '"')
-#      # Process repo type
-#      SOURCE_TYPE="$(echo $REPO_MIRROR | cut -d: -f1 )"
-#      # echo "SOURCE TYPE: $SOURCE_TYPE"
-#      case $SOURCE_TYPE in
-#        file)
-#          SOURCE="$(echo $REPO_MIRROR | sed 's%file://%%')"
-#          REPO_UPDATE="$(cat ${SOURCE}ChangeLog.txt  | head -1)"
-#          REPO_PKGS="$(grep slack-desc ${SOURCE}/CHECKSUMS.md5 | wc -l )"     
-#          ;;
-#        http|https)
-#          SOURCE=$(echo $REPO_MIRROR)
-#          REPO_UPDATE="$(curl --connect-timeout 6 -s ${SOURCE}ChangeLog.txt | head -n1  || echo fail )"
-#          REPO_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
-#          ;;
-#        ftp)
-#          SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
-#          ;;
-#        rsync)
-#          SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
-#          ;;
-#        git)
-#          SOURCE=$(echo $REPO_MIRROR | sed 's%file:/%%')
-#          ;;
-#      esac
-#      #echo "SOURCE: $SOURCE"
-#      echo "------------------------"
-#      cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
-#      echo "REPO_${TAG}_UPDATE=\"$REPO_UPDATE\""
-#      echo "REPO_${TAG}_PKGS=\"$REPO_PKGS\""
-#    
-#     # printf '| %10.10s| %10.10s| %60.60s| %30.30s| %10.10s|\n' "$REPO_NAME" "$REPO_ACTIVE" "$REPO_MIRROR" "$REPO_UPDATE" "$REPO_PKGS"
-#    done
+    pwd
+    ./sbpkg-repository info
     ;;
-  package-info)
-
+  repository-update)
+    ./sbpkg-repository update
     ;;
-
-
+  package-install)
+    ./sbpkg-package install $@
+    ;;
+  package-remove)
+    ./sbpkg-package remove $@
+    ;;
+  package-search)
+    ./sbpkg-package search $@
+    ;;
+  package-seach-file)
+    ./sbpkg-package search-file $@ 
+    ;;
+  package-description)
+    ./sbpkg-package description $@ 
+    ;;
+  package-needed)
+    ./sbpkg-package needed $@ 
+    ;;
+  package-upgrade)
+    ./sbpkg-package upgrade $@ 
+    ;;
+  package-mirror)
+    ./sbpkg-package mirror $@ 
+    ;;
 esac

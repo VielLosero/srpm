@@ -1,15 +1,32 @@
 #!/bin/bash
+#
+## Copyright (c) 2024 VielLosero 
+#
+# The program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by 
+# the Free Software Foundation, either version 3 of the License, 
+# or (at your option) any later version.
+#
+# The program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+# See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License 
+# along with this program. If not, see <https://www.gnu.org/licenses/>. 
+#
+## sbpkg, - A package manager for slackbuilds.
 
 # version
-VERSION=0.1.2
+VERSION=0.1.3
 
-#
-#if [ $# -eq 0 ]; then
-#  #show usage
-#  $0 usage
+# Check if db is started.
+
+# Check if db is up to date.
+
+# Now process args.
 #fi
 CMD=""
-#while [ -n "$1" ] ; do
 while [ -z "$CMD" ] ; do
   case $1 in
     -r|repo|reposiroty)
@@ -22,8 +39,6 @@ while [ -z "$CMD" ] ; do
         u|update)
           shift
           CMD=repository-update
-          ;;
-        *) $0 usage
           ;;
       esac
       shift $#
@@ -72,8 +87,6 @@ while [ -z "$CMD" ] ; do
         m|mirror)
           shift
           CMD=package-upgrade
-          ;;
-        *) $0 usage
           ;;
       esac
       #shift $#
@@ -131,7 +144,7 @@ while [ -z "$CMD" ] ; do
 done
 
 
-# Case with the comamnds
+# Case with comamnd
 case "$CMD" in
   repository-info)
     /usr/libexec/sbpkg/sbpkg-repository info

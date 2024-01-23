@@ -1,15 +1,15 @@
 # Source file with repositories for sbpkg
 # 
 #
-# SOURCE --> donde se consulta para los otros programas
-#           si ponemos http consultaremos via http
+# SOURCE --> where sbpkg ask for  
+# UPDATE --> If exist, and SOURCE is like file:// we make a mirror
 #
 # SBo repository for Slackware 15.0 stable.
 REPO_SBO_NAME="sbo"
 REPO_SBO_ACTIVE="true"
 REPO_SBO_PRIORITY="10"
-REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
 REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
+REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
 ## SBo repository for Slackware 15.0 stable.
 #REPO_SBO_NAME="sbo"
 #REPO_SBO_ACTIVE="true"

@@ -21,5 +21,6 @@ cp ${CWD}/sbpkg-package usr/libexec/sbpkg
 cp ${CWD}/sbpkg-repository usr/libexec/sbpkg
 cp -r ${CWD}/install .
 
-makepkg /tmp/sbpkg-0.1.2-noarch-1.txz && rm -rf ${TMPDIR}
+# (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number).(Extension)
+makepkg /tmp/sbpkg-0.1.3-noarch-1.txz && rm -rf ${TMPDIR}
 

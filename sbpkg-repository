@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 
-REPO_CONFIG_FILE=sbpkg.repositories
+REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
 REPO_DB_DIR=/var/lib/sbpkg
 TMPDIR=${TMPDIR:-/tmp/sbpkg} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
@@ -115,7 +115,7 @@ while [ -n "$1" ] ; do
       ;;
     select)
       ;;
-    clear-db)
+    clean-db)
       ;;
     *)
       echo "USAGE:"

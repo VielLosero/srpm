@@ -1,10 +1,13 @@
 #!/bin/bash
 
+# version
+VERSION=0.1.2
+
 #
-if [ $# -eq 0 ]; then
-  #show usage
-  $0 usage
-fi
+#if [ $# -eq 0 ]; then
+#  #show usage
+#  $0 usage
+#fi
 CMD=""
 #while [ -n "$1" ] ; do
 while [ -z "$CMD" ] ; do
@@ -107,12 +110,21 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-mirror
       ;;
+    -v|ver|version)
+      shift
+       #CMD=version
+      echo ""
+      echo "$0 - version $VERSION"
+      ;;
     *)
-    echo "Usage:"
-    echo "      $0 : {-r|repo|reposiroty} {i|info u|update}"
-    echo "      $0 : {-p|pkg|package} {i|install r|remove s|search sf|search-file}"
-    echo "      $0 :                  {d|description n|needed u|up|upgrade m|mirror}"
-    exit 0
+      #CMD=NULL
+      echo ""
+      echo "Usage:"
+      echo "      $0 : {-r|repo|reposiroty} {i|info u|update}"
+      echo "      $0 : {-p|pkg|package} {i|install r|remove s|search}"
+      echo "      $0 :                  {d|description sf|search-file}"
+      echo "      $0 :                  {n|needed u|up|upgrade m|mirror}"
+      exit 0
     ;;
 
   esac
@@ -122,34 +134,33 @@ done
 # Case with the comamnds
 case "$CMD" in
   repository-info)
-    pwd
-    ./sbpkg-repository info
+    /usr/libexec/sbpkg/sbpkg-repository info
     ;;
   repository-update)
-    ./sbpkg-repository update
+    /usr/libexec/sbpkg/sbpkg-repository update
     ;;
   package-install)
-    ./sbpkg-package install $@
+    /usr/libexec/sbpkg/sbpkg-package install $@
     ;;
   package-remove)
-    ./sbpkg-package remove $@
+    /usr/libexec/sbpkg/sbpkg-package remove $@
     ;;
   package-search)
-    ./sbpkg-package search $@
+    /usr/libexec/sbpkg/sbpkg-package search $@
     ;;
   package-seach-file)
-    ./sbpkg-package search-file $@ 
+    /usr/libexec/sbpkg/sbpkg-package search-file $@ 
     ;;
   package-description)
-    ./sbpkg-package description $@ 
+    /usr/libexec/sbpkg/sbpkg-package description $@ 
     ;;
   package-needed)
-    ./sbpkg-package needed $@ 
+    /usr/libexec/sbpkg/sbpkg-package needed $@ 
     ;;
   package-upgrade)
-    ./sbpkg-package upgrade $@ 
+    /usr/libexec/sbpkg/sbpkg-package upgrade $@ 
     ;;
   package-mirror)
-    ./sbpkg-package mirror $@ 
+    /usr/libexec/sbpkg/sbpkg-package mirror $@ 
     ;;
 esac

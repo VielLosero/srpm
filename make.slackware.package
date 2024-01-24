@@ -13,6 +13,7 @@ pwd
 mkdir -vp usr/sbin
 mkdir -vp etc/sbpkg
 mkdir -vp usr/libexec/sbpkg
+mkdir -vp var/lib/sbpkg
 
 cp ${CWD}/sbpkg usr/sbin
 cp ${CWD}/sbpkg.config.new etc/sbpkg
@@ -22,5 +23,5 @@ cp ${CWD}/sbpkg-repository usr/libexec/sbpkg
 cp -r ${CWD}/install .
 
 # (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number).(Extension)
-makepkg /tmp/sbpkg-0.1.3-noarch-1.txz && rm -rf ${TMPDIR}
+makepkg /tmp/sbpkg-0.1.4-noarch-1.txz && rm -rf ${TMPDIR}
 

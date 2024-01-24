@@ -16,8 +16,12 @@
 # You should have received a copy of the GNU General Public License 
 # along with sbpkg. If not, see <https://www.gnu.org/licenses/>. 
 #
-## sbpkg, - A package manager for slackbuilds.
+## sbpkg, - A simple package manager for slackbuilds.
 
+findpackage(){
+grep -n $1 /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
+
+}
 
 
 while [ -n "$1" ] ; do
@@ -32,6 +36,7 @@ while [ -n "$1" ] ; do
       shift
       SEARCHLIST=$@
       echo "Searching for $SEARCHLIST"
+      shift $#
       ;;
     search-file)
       shift
@@ -55,5 +60,6 @@ while [ -n "$1" ] ; do
       ;;
   esac
 done
+
 
 

@@ -16,36 +16,63 @@
 # You should have received a copy of the GNU General Public License 
 # along with sbpkg. If not, see <https://www.gnu.org/licenses/>. 
 #
-## sbpkg, - A package manager for slackbuilds.
+## sbpkg, - A simple package manager for slackbuilds.
 
 REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
-REPO_DB_DIR=/var/lib/sbpkg
 TMPDIR=${TMPDIR:-/tmp/sbpkg} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
+getrepo(){
+  REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+  # activate pkg db by make repo dir 
+  [[ ! -d ${PKG_DB_DIR}/${REPO_NAME} ]] && mkdir -vp ${PKG_DB_DIR}/${REPO_NAME}
+  REPO_DB=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')
+  REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
+  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
+  SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
+  REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
+  # sanity check if no UPDATE on config take SOURCE
+  if [ -z $REPO_UPDATE ] ; then
+    REPO_UPDATE=$REPO_SOURCE
+  fi
+  echo "Get files from: $REPO_UPDATE"
+  UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+}
 
 info(){
-#get repo tags from repo config file 
+#get repos (tags) from repo config file 
 REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 #clear
 echo "------------------------"
 echo "- Repository information"
 for TAG in $REPO_TAGS ; do  
-  REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-  REPO_ACTIVE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ACTIVE" | cut -d= -f2 | tr -d '"')
-  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-  # Process repo type
-  SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-  # echo "SOURCE TYPE: $SOURCE_TYPE"
-  case $SOURCE_TYPE in
+  echo "------------------------"
+  cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
+done
+}
+
+check(){
+#get repos (tags) from repo config file 
+REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
+#clear
+for TAG in $REPO_TAGS ; do  
+  ## REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+  ## REPO_ACTIVE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ACTIVE" | cut -d= -f2 | tr -d '"')
+  ## REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
+  ## # Process repo type
+  ## SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
+  ## # echo "SOURCE TYPE: $SOURCE_TYPE"
+  getrepo 
+  #case $SOURCE_TYPE in
+  case $UPDATE_TYPE in
     file)
       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
-      REPO_UPDATED="$(cat ${SOURCE}/ChangeLog.txt  | head -1)"
-      REPO_PKGS="$(grep slack-desc ${SOURCE}/CHECKSUMS.md5 | wc -l )"     
+      SOURCE_UPDATED="$(cat ${SOURCE}/ChangeLog.txt  | head -1)"
+      SOURCE_PKGS="$(grep slack-desc ${SOURCE}/CHECKSUMS.md5 | wc -l )"     
       ;;
     http|https)
       SOURCE=$(echo $REPO_SOURCE)
-      REPO_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
-      REPO_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
+      SOURCE_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
+      SOURCE_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
       ;;
     ftp)
       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
@@ -54,61 +81,95 @@ for TAG in $REPO_TAGS ; do
       mkdir -vp ${TMPDIR}/${REPO_NAME}
       #echo "rsync -avP "${REPO_UPDATE}/ChangeLog.txt CHECKSUMS.md5" ${TMPDIR}/"
       rsync -avP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${TMPDIR}/${REPO_NAME}/
-      REPO_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
-      REPO_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
+      SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
+      SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
       ;;
     git)
       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
       ;;
   esac
+  # check date on db
+  REPO_DB=${PKG_DB_DIR}/${REPO_NAME}
+  REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
+  DB_UPDATED=$( cat ${REPO_DB}/${REPO_VERSION}/ChangeLog.txt  | head -1)
+  #
+  
   #echo "SOURCE: $SOURCE"
   echo "------------------------"
-  cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
-  echo "REPO_${TAG}_UPDATED=\"$REPO_UPDATED\""
-  echo "REPO_${TAG}_PKGS=\"$REPO_PKGS\""
+  echo "- Repository information"
+  echo "------------------------"
+  #cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
+  echo "NAme:          \"$REPO_NAME\""
+  echo "Source date:   \"$SOURCE_UPDATED\""
+  echo "Local db date: \"$DB_UPDATED\""
+  #echo "SOURCE_${TAG}_PKGS=\"$REPO_PKGS\""
 done
 }
 
 update(){
 echo ""
+#get repos (tags) from repo config file 
 REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 for TAG in $REPO_TAGS ; do  
-  REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-  mkdir -vp ${REPO_DB_DIR}/${REPO_NAME}
-  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-  SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-  REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
-  echo "Get files from: $REPO_UPDATE"
-  UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+  ## REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+  ## # activate pkg db by make repo dir 
+  ## [[ ! -d ${PKG_DB_DIR}/${REPO_NAME} ]] && mkdir -vp ${PKG_DB_DIR}/${REPO_NAME}
+  ## REPO_DB=${PKG_DB_DIR}/${REPO_NAME}
+  ## REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
+  ## REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
+  ## SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
+  ## REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
+  ## # sanity check if no UPDATE on config take SOURCE
+  ## if [ -z $REPO_UPDATE ] ; then
+  ##   REPO_UPDATE=$REPO_SOURCE
+  ## fi
+  ## echo "Get files from: $REPO_UPDATE"
+  ## UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+  getrepo
   case $UPDATE_TYPE in
     http|https)
       SOURCE=$(echo $REPO_UPDATE)
-      REPO_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
-      REPO_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
+      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/ChangeLog.txt
+      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/CHECKSUMS.md5
+      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/CHECKSUMS.md5.asc
       ;;
     ftp)
-      SOURCE=$(echo $REPO_SOURCE | sed 's%file:/%%')
+      echo $REPO_UPDATE
+      SOURCE=$(echo $REPO_UPDATE | sed 's%file:/%%')
       ;;
     rsync)
-      #mkdir -vp ${TMPDIR}/${REPO_NAME}
-      #rsync -avP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${TMPDIR}/${REPO_NAME}/
-      #rsync -avP ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/
-      #gpg --verify ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5
-      if [ "$SOURCE_TYPE" == "file" ] ; then
-        LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
-        echo "rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
-        rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
-        gpg --verify ${LOCAL_MIRROR}/CHECKSUMS.md5.asc ${LOCAL_MIRROR}/CHECKSUMS.md5
-        #cd ${LOCAL_MIRROR}/ 
-        #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
-      else
-        echo ""
-      fi
+      case "$SOURCE_TYPE" in
+        file)
+          LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
+          echo "rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
+          rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
+          if [ -L ${REPO_DB}/${REPO_VERSION} ] ; then
+            true
+          else
+            # create a symlink from mirror to db
+            ln -s ${LOCAL_MIRROR}/${REPO_VERSION} ${REPO_DB}
+          fi
+          ;;
+        rsync)
+          cat <<"EOF"
+          rsync -avP ${REPO_UPDATE}/ChangeLog.txt \
+                     ${REPO_UPDATE}/CHECKSUMS.md5 \
+                     ${REPO_UPDATE}/CHECKSUMS.md5.asc \
+                     ${REPO_DB}/${REPO_VERSION}"
+EOF
+          ;;
+      esac
       ;;
     git)
-      SOURCE=$(echo $REPO_SOURCE | sed 's%file:/%%')
+      echo $REPO_UPDATE
+      SOURCE=$(echo $REPO_UPDATE | sed 's%file:/%%')
       ;;
   esac
+  
+  #  after update verify signature
+  gpg --verify "${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5.asc" "${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5"
+  #check md5sum of ChangeLog.txt
+  #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
 
   
 
@@ -122,11 +183,13 @@ while [ -n "$1" ] ; do
       shift
       info
       ;;
+    check)
+      shift
+      check
+      ;;
     update)
       shift
       update
-      ;;
-    upgrade)
       ;;
     select)
       ;;

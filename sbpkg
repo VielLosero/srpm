@@ -15,17 +15,18 @@
 # You should have received a copy of the GNU General Public License 
 # along with this program. If not, see <https://www.gnu.org/licenses/>. 
 #
-## sbpkg, - A package manager for slackbuilds.
+## sbpkg, - A simple package manager for slackbuilds.
 
 # version
-VERSION=0.1.3
+VERSION=0.1.4
 
-# Check if db is started.
-
-# Check if db is up to date.
+# Check if pkg db is started.
+if [ -z $(ls -A /var/lib/sbpkg) ] ; then
+  echo "DB empty"
+fi
+# Check if pkg db is up to date.
 
 # Now process args.
-#fi
 CMD=""
 while [ -z "$CMD" ] ; do
   case $1 in

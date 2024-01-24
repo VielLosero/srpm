@@ -8,8 +8,10 @@
 REPO_SBO_NAME="sbo"
 REPO_SBO_ACTIVE="true"
 REPO_SBO_PRIORITY="10"
+REPO_SBO_VERSION="15.0"
 REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
 REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
+REPO_SBO_DBDIR="/var/lib/sbpkg"
 ## SBo repository for Slackware 15.0 stable.
 #REPO_SBO_NAME="sbo"
 #REPO_SBO_ACTIVE="true"

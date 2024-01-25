@@ -12,6 +12,16 @@ REPO_SBO_VERSION="15.0"
 REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
 REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
 REPO_SBO_DBDIR="/var/lib/sbpkg"
+#
+# Slackware repository
+REPO_SLACKWARE_NAME="slackware"
+REPO_SLACKWARE_ACTIVE="true"
+REPO_SLACKWARE_PRIORITY="10"
+REPO_SLACKWARE_VERSION="slackware64-15.0"
+REPO_SLACKWARE_SOURCE="file:///opt/slackware-repositories/x86/slackware/slackware64-15.0"
+REPO_SLACKWARE_UPDATE="rsync://mirrors.kernel.org/slackware/slackware64-15.0"
+REPO_SLACKWARE_DBDIR="/var/lib/sbpkg"
+#
 ## SBo repository for Slackware 15.0 stable.
 #REPO_SBO_NAME="sbo"
 #REPO_SBO_ACTIVE="true"

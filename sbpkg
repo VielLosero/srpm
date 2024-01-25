@@ -18,10 +18,10 @@
 ## sbpkg, - A simple package manager for slackbuilds.
 
 # version
-VERSION=0.1.4
+VERSION=0.1.5
 
 # Check if pkg db is started.
-if [ -z $(ls -A /var/lib/sbpkg) ] ; then
+if [ -z "$(ls -A /var/lib/sbpkg)" ] ; then
   echo "DB empty"
 fi
 # Check if pkg db is up to date.
@@ -41,6 +41,10 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=repository-update
           ;;
+        c|check)
+          shift
+          CMD=repository-check
+          ;;
       esac
       shift $#
       ;;
@@ -52,6 +56,11 @@ while [ -z "$CMD" ] ; do
     -ru|-rupdate|repository-update)
       shift
       CMD=repository-update
+      shift $#
+      ;;
+    -rc|-rcheck|repository-check)
+      shift
+      CMD=repository-check
       shift $#
       ;;
     -p|pkg|package)
@@ -134,7 +143,7 @@ while [ -z "$CMD" ] ; do
       #CMD=NULL
       echo ""
       echo "Usage:"
-      echo "      $0 : {-r|repo|reposiroty} {i|info u|update}"
+      echo "      $0 : {-r|repo|reposiroty} {i|info u|update c|check}"
       echo "      $0 : {-p|pkg|package} {i|install r|remove s|search}"
       echo "      $0 :                  {d|description sf|search-file}"
       echo "      $0 :                  {n|needed u|up|upgrade m|mirror}"
@@ -152,6 +161,9 @@ case "$CMD" in
     ;;
   repository-update)
     /usr/libexec/sbpkg/sbpkg-repository update
+    ;;
+  repository-check)
+    /usr/libexec/sbpkg/sbpkg-repository check
     ;;
   package-install)
     /usr/libexec/sbpkg/sbpkg-package install $@

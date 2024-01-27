@@ -18,7 +18,7 @@
 ## sbpkg, - A simple package manager for slackbuilds.
 
 # version
-VERSION=0.1.5
+VERSION=0.1.6
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/sbpkg)" ] ; then

@@ -18,31 +18,33 @@
 #
 ## sbpkg, - A simple package manager for slackbuilds.
 
-REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
+source /usr/libexec/sbpkg/sbpkg.functions.sh
+
+#REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
 TMPDIR=${TMPDIR:-/tmp/sbpkg} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
-
-gettags(){
-#get repos (tags) from repo config file 
-REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-}
-
-getrepo(){
-  REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-  REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
-  REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/${REPO_NAME}"
-  # activate pkg db by make repo dir 
-  [[ ! -d ${REPO_DB} ]] && mkdir -vp ${REPO_DB}
-  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-  SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-  REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
-  # sanity check if no UPDATE on config take SOURCE
-  if [ -z $REPO_UPDATE ] ; then
-    REPO_UPDATE=$REPO_SOURCE
-  fi
-  echo "Get files from: $REPO_UPDATE"
-  UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
-}
+## # Get all diferent tags from repositories in repo config file
+## # A  tag is like the repository name
+## gettags(){
+## REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
+## }
+## 
+## getrepo(){
+##   REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+##   REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
+##   REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/${REPO_NAME}"
+##   # activate pkg db by make repo dir 
+##   [[ ! -d ${REPO_DB} ]] && mkdir -vp ${REPO_DB}
+##   REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
+##   SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
+##   REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
+##   # sanity check if no UPDATE on config take SOURCE
+##   if [ -z $REPO_UPDATE ] ; then
+##     REPO_UPDATE=$REPO_SOURCE
+##   fi
+##   echo "Get files from: $REPO_UPDATE"
+##   UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+## }
 
 info(){
 #get repos (tags) from repo config file 
@@ -63,18 +65,11 @@ check(){
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 gettags
 #clear
+  echo "------------------------"
+  echo "- Repository up to date"
+  echo "------------------------"
 for TAG in $REPO_TAGS ; do  
-  echo "------------------------"
-  echo "- Repository check updates"
-  echo "------------------------"
-  ## REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-  ## REPO_ACTIVE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ACTIVE" | cut -d= -f2 | tr -d '"')
-  ## REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-  ## # Process repo type
-  ## SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-  ## # echo "SOURCE TYPE: $SOURCE_TYPE"
   getrepo 
-  #case $SOURCE_TYPE in
   case $UPDATE_TYPE in
     file)
       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
@@ -101,10 +96,7 @@ for TAG in $REPO_TAGS ; do
       ;;
   esac
   # check date on db
-  #REPO_DB=${PKG_DB_DIR}/${REPO_NAME}
-  #REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
   DB_UPDATED=$( cat ${REPO_DB}/${REPO_VERSION}/ChangeLog.txt  | head -1)
-  #
   
   #echo "SOURCE: $SOURCE"
   #cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"

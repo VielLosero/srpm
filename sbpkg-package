@@ -18,8 +18,11 @@
 #
 ## sbpkg, - A simple package manager for slackbuilds.
 
+source /usr/libexec/sbpkg/sbpkg.functions.sh
+
 findpackage(){
-grep -n $1 /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
+#grep -n "${1}.SlackBuild" /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
+grep -n "\/${1}.*.SlackBuild" /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
 
 }
 
@@ -35,14 +38,64 @@ while [ -n "$1" ] ; do
     search)
       shift
       SEARCHLIST=$@
-      echo "Searching for $SEARCHLIST"
+      #echo "Searching for $SEARCHLIST"
       shift $#
+      gettags
+      for TAG in $REPO_TAGS ; do  
+        getrepo
+        for PACKAGE in $SEARCHLIST ; do
+          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
+            sed 's:.*/::' | grep "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
+          [ -z "$FILEPATH" ] && break
+          echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
+        done
+      done
       ;;
     search-file)
       shift
       ;;
     description)
       shift
+      DESCLIST=$@
+      #echo "Description for $DESCLIST"
+      shift $#
+      gettags
+      for TAG in $REPO_TAGS ; do  
+        getrepo
+        for PACKAGE in $DESCLIST ; do
+          #grep -n ".*${PACKAGE}.*.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5
+          # sanity check, add  | head -1
+          #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1
+          #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3
+          FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
+          [ -z "$FILEPATH" ] && break
+          FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
+          #echo $FILE
+          if [ -e $FILE ] ; then 
+            cat "${REPO_DB}/${REPO_VERSION}/${FILEPATH}" | tail +9
+          else
+            # if no find on db try to download and show
+            case $SOURCE_TYPE in
+             file)
+               SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
+               ;;
+             http|https)
+               SOURCE=$(echo $REPO_SOURCE)
+               #wget file on db and cat it
+               ;;
+             ftp)
+               SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+               ;;
+             rsync)
+               SOURCE="$(echo $REPO_SOURCE)"
+               ;;
+             git)
+               SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+               ;;
+            esac
+          fi
+        done
+      done
       ;;
     needed)
       shift
@@ -52,6 +105,22 @@ while [ -n "$1" ] ; do
       ;;
     mirror)
       shift
+      ;;
+    locate)
+      shift
+      SEARCHLIST=$@
+      #echo "Searching for $SEARCHLIST"
+      shift $#
+      gettags
+      for TAG in $REPO_TAGS ; do  
+        getrepo
+        for PACKAGE in $SEARCHLIST ; do
+          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
+            cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
+          [ -z "$FILEPATH" ] && break
+          echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
+        done
+      done
       ;;
     *)
       echo "USAGE:"

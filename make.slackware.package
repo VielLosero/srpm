@@ -20,8 +20,11 @@ cp ${CWD}/sbpkg.config.new etc/sbpkg
 cp ${CWD}/sbpkg.repositories.new etc/sbpkg
 cp ${CWD}/sbpkg-package usr/libexec/sbpkg
 cp ${CWD}/sbpkg-repository usr/libexec/sbpkg
+cp ${CWD}/sbpkg.functions.sh usr/libexec/sbpkg
 cp -r ${CWD}/install .
 
 # (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number).(Extension)
-makepkg /tmp/sbpkg-0.1.5-noarch-1.txz && rm -rf ${TMPDIR}
+VERSION=$(grep ^VERSION ${CWD}/sbpkg | cut -d= -f2 )
+[ -z $VERSION ] && exit 1
+makepkg /tmp/sbpkg-$VERSION-noarch-1.txz && rm -rf ${TMPDIR}
 

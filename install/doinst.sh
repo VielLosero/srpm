@@ -9,5 +9,5 @@ config() {
  fi
  # Otherwise, we leave the .new copy for the admin to consider...
 }
-config etc/sbpkg/sbpkg.config.new
-config etc/sbpkg/sbpkg.repositories.new
+config etc/srpm/srpm.config.new
+config etc/srpm/srpm.repositories.new

@@ -1,4 +1,4 @@
 # not used yet
 # confifgured in sbopkg.repositories with REPO_TAG_DBDIR variable
-#REPO_DB_DIR=/var/lib/sbpkg
+#REPO_DB_DIR=/var/lib/srpm
 

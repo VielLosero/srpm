@@ -2,34 +2,34 @@
 #
 ## Copyright (c) 2024 VielLosero 
 #
-# This file is part of sbpkg. 
-# sbpkg is free software: you can redistribute it and/or modify it 
+# This file is part of srpm. 
+# srpm is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU General Public License as published by 
 # the Free Software Foundation, either version 3 of the License, 
 # or (at your option) any later version.
 #
-# sbpkg is distributed in the hope that it will be useful, 
+# srpm is distributed in the hope that it will be useful, 
 # but WITHOUT ANY WARRANTY; without even the implied warranty of 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 # See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License 
-# along with sbpkg. If not, see <https://www.gnu.org/licenses/>. 
+# along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## sbpkg, - A simple package manager for slackbuilds.
+## srpm, - A simple package manager for slackbuilds.
 
-source /usr/libexec/sbpkg/sbpkg.functions.sh
+source /usr/libexec/srpm/srpm.functions.sh
 
-#REPO_CONFIG_FILE=/etc/sbpkg/sbpkg.repositories
-TMPDIR=${TMPDIR:-/tmp/sbpkg} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
+#REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
+TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
 ## # Get all diferent tags from repositories in repo config file
 ## # A  tag is like the repository name
-## gettags(){
+## gettags_from_config_file(){
 ## REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 ## }
 ## 
-## getrepo(){
+## getrepo_vars(){
 ##   REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
 ##   REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
 ##   REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/${REPO_NAME}"
@@ -49,7 +49,7 @@ TMPDIR=${TMPDIR:-/tmp/sbpkg} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 info(){
 #get repos (tags) from repo config file 
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-gettags
+gettags_from_config_file
 #clear
 echo "------------------------"
 echo "- Repository information"
@@ -63,33 +63,41 @@ done
 check(){
 #get repos (tags) from repo config file 
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-gettags
+gettags_from_config_file
 #clear
   echo "------------------------"
   echo "- Repository up to date"
   echo "------------------------"
 for TAG in $REPO_TAGS ; do  
-  getrepo 
+  getrepo_vars 
+  mkdir -vp ${TMPDIR}/${REPO_NAME}
   case $UPDATE_TYPE in
     file)
       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
-      SOURCE_UPDATED="$(cat ${SOURCE}/ChangeLog.txt  | head -1)"
-      SOURCE_PKGS="$(grep slack-desc ${SOURCE}/CHECKSUMS.md5 | wc -l )"     
+      cp ${SOURCE}/ChangeLog.txt ${TMPDIR}/${REPO_NAME}/ChangeLog.txt
+      cp ${SOURCE}/CHECKSUMS.md5 ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5
+      cp ${SOURCE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc
+      get_Changelog_date_and_packages_number
+      #SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
+      #SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
       ;;
     http|https)
       SOURCE=$(echo $REPO_SOURCE)
-      SOURCE_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
-      SOURCE_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
+      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/ChangeLog.txt
+      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/CHECKSUM.md5
+      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/CHECKSUM.md5.asc
+      get_Changelog_date_and_packages_number
+      #SOURCE_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
+      #SOURCE_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
       ;;
     ftp)
       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
       ;;
     rsync)
-      mkdir -vp ${TMPDIR}/${REPO_NAME}
-      #echo "rsync -avP "${REPO_UPDATE}/ChangeLog.txt CHECKSUMS.md5" ${TMPDIR}/"
-      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${TMPDIR}/${REPO_NAME}/
-      SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
-      SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
+      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/
+      get_Changelog_date_and_packages_number
+      #SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
+      #SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
       ;;
     git)
       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
@@ -103,6 +111,13 @@ for TAG in $REPO_TAGS ; do
   echo "NAme:          \"$REPO_NAME\""
   echo "Source date:   \"$SOURCE_UPDATED\""
   echo "Local db date: \"$DB_UPDATED\""
+  #gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc > /dev/null || echo "### WARNING: gpg BAD signature. ###"
+  gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc &> /dev/null || \
+    cat <<"EOF"
+  ###################################
+  ### WARNING: BAD gpg signature. ###
+  ###################################
+EOF
   echo "------------------------"
   #echo "SOURCE_${TAG}_PKGS=\"$REPO_PKGS\""
 done
@@ -112,10 +127,10 @@ update(){
 echo ""
 #get repos (tags) from repo config file 
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-gettags
+gettags_from_config_file
 for TAG in $REPO_TAGS ; do  
   # get repo var
-  getrepo
+  getrepo_vars
   case $UPDATE_TYPE in
     http|https)
       SOURCE=$(echo $REPO_UPDATE)

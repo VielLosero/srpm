@@ -1,11 +1,11 @@
 
 
 # seearch for a package that end with, grep regex
-sbpkg -ps nc\\
+srpm -ps nc\\
 # search for packager that contain pattern, grep regex 
-sbpkg -ps .*nc
+srpm -ps .*nc
 # search for a package that start with any (*) and end with office 
-sbpkg -ps .*office\\
+srpm -ps .*office\\
 
 
 

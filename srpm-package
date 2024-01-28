@@ -2,27 +2,27 @@
 #
 ## Copyright (c) 2024 VielLosero 
 #
-# This file is part of sbpkg. 
-# sbpkg is free software: you can redistribute it and/or modify it 
+# This file is part of srpm. 
+# srpm is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU General Public License as published by 
 # the Free Software Foundation, either version 3 of the License, 
 # or (at your option) any later version.
 #
-# sbpkg is distributed in the hope that it will be useful, 
+# srpm is distributed in the hope that it will be useful, 
 # but WITHOUT ANY WARRANTY; without even the implied warranty of 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 # See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License 
-# along with sbpkg. If not, see <https://www.gnu.org/licenses/>. 
+# along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## sbpkg, - A simple package manager for slackbuilds.
+## srpm, - A simple package manager for slackbuilds.
 
-source /usr/libexec/sbpkg/sbpkg.functions.sh
+source /usr/libexec/srpm/srpm.functions.sh
 
 findpackage(){
-#grep -n "${1}.SlackBuild" /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
-grep -n "\/${1}.*.SlackBuild" /var/lib/sbpkg/sbo/15.0/CHECKSUMS.md5
+#grep -n "${1}.SlackBuild" /var/lib/srpm/sbo/15.0/CHECKSUMS.md5
+grep -n "\/${1}.*.SlackBuild" /var/lib/srpm/sbo/15.0/CHECKSUMS.md5
 
 }
 
@@ -40,9 +40,9 @@ while [ -n "$1" ] ; do
       SEARCHLIST=$@
       #echo "Searching for $SEARCHLIST"
       shift $#
-      gettags
+      gettags_from_config_file
       for TAG in $REPO_TAGS ; do  
-        getrepo
+        getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
             sed 's:.*/::' | grep "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
@@ -59,9 +59,9 @@ while [ -n "$1" ] ; do
       DESCLIST=$@
       #echo "Description for $DESCLIST"
       shift $#
-      gettags
+      gettags_from_config_file
       for TAG in $REPO_TAGS ; do  
-        getrepo
+        getrepo_vars
         for PACKAGE in $DESCLIST ; do
           #grep -n ".*${PACKAGE}.*.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5
           # sanity check, add  | head -1
@@ -111,9 +111,9 @@ while [ -n "$1" ] ; do
       SEARCHLIST=$@
       #echo "Searching for $SEARCHLIST"
       shift $#
-      gettags
+      gettags_from_config_file
       for TAG in $REPO_TAGS ; do  
-        getrepo
+        getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
             cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.*.SlackBuild$" | cut -d. -f1)

@@ -11,20 +11,20 @@ cd ${TMPDIR}
 
 pwd
 mkdir -vp usr/sbin
-mkdir -vp etc/sbpkg
-mkdir -vp usr/libexec/sbpkg
-mkdir -vp var/lib/sbpkg
+mkdir -vp etc/srpm
+mkdir -vp usr/libexec/srpm
+mkdir -vp var/lib/srpm
 
-cp ${CWD}/sbpkg usr/sbin
-cp ${CWD}/sbpkg.config.new etc/sbpkg
-cp ${CWD}/sbpkg.repositories.new etc/sbpkg
-cp ${CWD}/sbpkg-package usr/libexec/sbpkg
-cp ${CWD}/sbpkg-repository usr/libexec/sbpkg
-cp ${CWD}/sbpkg.functions.sh usr/libexec/sbpkg
+cp ${CWD}/srpm usr/sbin
+cp ${CWD}/srpm.config.new etc/srpm
+cp ${CWD}/srpm.repositories.new etc/srpm
+cp ${CWD}/srpm-package usr/libexec/srpm
+cp ${CWD}/srpm-repository usr/libexec/srpm
+cp ${CWD}/srpm.functions.sh usr/libexec/srpm
 cp -r ${CWD}/install .
 
 # (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number).(Extension)
-VERSION=$(grep ^VERSION ${CWD}/sbpkg | cut -d= -f2 )
+VERSION=$(grep ^VERSION ${CWD}/srpm | cut -d= -f2 )
 [ -z $VERSION ] && exit 1
-makepkg /tmp/sbpkg-$VERSION-noarch-1.txz && rm -rf ${TMPDIR}
+makepkg /tmp/srpm-$VERSION-noarch-1.txz && rm -rf ${TMPDIR}
 

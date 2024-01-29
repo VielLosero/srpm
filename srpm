@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License 
 # along with this program. If not, see <https://www.gnu.org/licenses/>. 
 #
-## srpm, - A simple package manager for slackbuilds.
+## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.7
+VERSION=0.1.8
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/srpm)" ] ; then
@@ -147,6 +147,7 @@ while [ -z "$CMD" ] ; do
       echo "      $0 : {-p|pkg|package} {i|install r|remove s|search}"
       echo "      $0 :                  {d|description sf|search-file}"
       echo "      $0 :                  {n|needed u|up|upgrade m|mirror}"
+      echo "      $0 : {-v|version}"
       exit 0
     ;;
 

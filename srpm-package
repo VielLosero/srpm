@@ -46,8 +46,9 @@ while [ -n "$1" ] ; do
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
             sed 's:.*/::' | grep "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
-          [ -z "$FILEPATH" ] && break
-          echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
+          if [ -n "$FILEPATH" ] ; then
+            echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
+          fi
         done
       done
       ;;
@@ -68,31 +69,32 @@ while [ -n "$1" ] ; do
           #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1
           #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3
           FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
-          [ -z "$FILEPATH" ] && break
-          FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
-          #echo $FILE
-          if [ -e $FILE ] ; then 
-            cat "${REPO_DB}/${REPO_VERSION}/${FILEPATH}" | tail +9
-          else
-            # if no find on db try to download and show
-            case $SOURCE_TYPE in
-             file)
-               SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
-               ;;
-             http|https)
-               SOURCE=$(echo $REPO_SOURCE)
-               #wget file on db and cat it
-               ;;
-             ftp)
-               SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
-               ;;
-             rsync)
-               SOURCE="$(echo $REPO_SOURCE)"
-               ;;
-             git)
-               SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
-               ;;
-            esac
+          if [ -n "$FILEPATH" ] ; then
+            FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
+            #echo $FILE
+            if [ -e $FILE ] ; then 
+              cat "${REPO_DB}/${REPO_VERSION}/${FILEPATH}" | tail +9
+            else
+              # if no find on db try to download and show
+              case $SOURCE_TYPE in
+               file)
+                 SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
+                 ;;
+               http|https)
+                 SOURCE=$(echo $REPO_SOURCE)
+                 #wget file on db and cat it
+                 ;;
+               ftp)
+                 SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+                 ;;
+               rsync)
+                 SOURCE="$(echo $REPO_SOURCE)"
+                 ;;
+               git)
+                 SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+                 ;;
+              esac
+            fi
           fi
         done
       done
@@ -116,9 +118,12 @@ while [ -n "$1" ] ; do
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
-            cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
-          [ -z "$FILEPATH" ] && break
-          echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
+            cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.*.SlackBuild$" | cut -d. -f1 | \
+            rev | cut -d/ -f2- | rev)
+          if [ -n "$FILEPATH" ] ; then
+            #echo "$FILEPATH" | sed "s;.*;${TAG}: ${REPO_SOURCE}/&;"
+            echo "$FILEPATH" | sed "s;.*;${TAG}: &;"
+          fi
         done
       done
       ;;

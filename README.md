@@ -24,7 +24,15 @@ srpm -ps .*nc
 ```
 srpm -ps .*office\\
 ```
-
+### Search for needed packages only print one time and first install
+```
+srpm -pn kicad | cut -d: -f1 | tac | awk '!_[$0]++'
+```
+### Search for needed packages and find version installed
+```
+srpm -pv $(srpm -pn kicad | cut -d: -f1 | tac | awk '!_[$0]++' | tr  "\n" " ")
+Dont work?? --> srpm -pv $(srpm -pn kicad | cut -d: -f1 | tac | uniq | tr  "\n" " ")
+```
 
 ## Copyrights
 

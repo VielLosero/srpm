@@ -18,13 +18,9 @@
 #
 ## srpm, - A simple package manager for slackbuilds.
 
+# Get function sources.
 source /usr/libexec/srpm/srpm.functions.sh
 
-findpackage(){
-#grep -n "${1}.SlackBuild" /var/lib/srpm/sbo/15.0/CHECKSUMS.md5
-grep -n "\/${1}.*.SlackBuild" /var/lib/srpm/sbo/15.0/CHECKSUMS.md5
-
-}
 
 
 while [ -n "$1" ] ; do
@@ -68,6 +64,7 @@ while [ -n "$1" ] ; do
           # sanity check, add  | head -1
           #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1
           #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3
+          #FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
           FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
           if [ -n "$FILEPATH" ] ; then
             FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
@@ -101,6 +98,49 @@ while [ -n "$1" ] ; do
       ;;
     needed)
       shift
+      NEEDLIST=$@
+      shift $#
+      gettags_from_config_file
+      for TAG in $REPO_TAGS ; do  
+        getrepo_vars
+        for PKG in $NEEDLIST ; do
+          #get_requires $PKG
+          REQUIRES=("$PKG")
+          #[[ $FOUND == 1 ]] && [[ -n $REQUIRES ]] && echo "$PKG $REQUIRES"
+          #[[ $FOUND == 1 ]] && [[ -n $REQUIRES ]] && echo "${REQUIRES[@]}"
+          while [ -n "${REQUIRES[*]}" ] ; do 
+            for index in ${!REQUIRES[@]} ; do 
+              #echo "array:${REQUIRES[@]}"
+              #echo "${REQUIRES[$index]}"
+              get_requires "${REQUIRES[$index]}"
+              unset "REQUIRES[$index]"
+              #echo "rest:${REQUIRES[@]}"
+              #echo "rest:${#REQUIRES[@]}"
+            done
+          done
+          #    # if no find on db try to download and show
+          #    case $SOURCE_TYPE in
+          #     file)
+          #       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
+          #       ;;
+          #     http|https)
+          #       SOURCE=$(echo $REPO_SOURCE)
+          #       #wget file on db and cat it
+          #       ;;
+          #     ftp)
+          #       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+          #       ;;
+          #     rsync)
+          #       SOURCE="$(echo $REPO_SOURCE)"
+          #       ;;
+          #     git)
+          #       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+          #       ;;
+          #    esac
+          #  fi
+          #fi
+        done
+      done
       ;;
     upgrade)
       shift
@@ -118,11 +158,40 @@ while [ -n "$1" ] ; do
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
-            cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.*.SlackBuild$" | cut -d. -f1 | \
+            cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.SlackBuild$" | cut -d. -f1 | \
             rev | cut -d/ -f2- | rev)
           if [ -n "$FILEPATH" ] ; then
             #echo "$FILEPATH" | sed "s;.*;${TAG}: ${REPO_SOURCE}/&;"
             echo "$FILEPATH" | sed "s;.*;${TAG}: &;"
+          fi
+        done
+      done
+      ;;
+    version)
+      shift
+      VERSIONLIST=$@
+      shift $#
+      gettags_from_config_file
+      for TAG in $REPO_TAGS ; do  
+        getrepo_vars
+        for PACKAGE in $VERSIONLIST ; do
+          if DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null)"; then
+            if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT 2>&1 >/dev/null ; then
+              DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
+            fi
+            #echo "DB_PKG_VER: $DB_PKG_VER"
+            DB_PKG_VER=$( echo $DB_PKG_VER | cut -d " " -f2)
+            #echo "DB_PKG_VER: $DB_PKG_VER"
+            INST_PKG_VER_LINE=$(ls -1 /var/log/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)
+            #echo "INST_PKG_VER_LINE: $INST_PKG_VER_LINE"
+            if [ ! -z $INST_PKG_VER_LINE ] ; then
+              #echo $INST_PKG_VER_LINE
+              INST_PKG_VER="$(ls -1 /var/lib/pkgtools/packages/ | sed -n "${INST_PKG_VER_LINE}p" | rev | cut -d- -f3 | rev)"
+              #echo "LAST: ${DB_PKG_VER} INSTALLED: ${INST_PKG_VER}"
+            else
+              INST_PKG_VER="Not installed."
+            fi
+            echo "${PACKAGE}: last ${DB_PKG_VER} ; current ${INST_PKG_VER}"
           fi
         done
       done

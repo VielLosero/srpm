@@ -31,6 +31,51 @@ SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
 SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
 }
 
+
+# Slackware ans SBO have diferent files to get package versions.
+# I think the easy way is to make a little file with package version to uniform the queri on the script.
+make_packages_version_db(){
+if [ "$1" == "SLACKWARE" ] ; then
+  echo "Creating $1 package versions file PKGVER.TXT"
+  rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+  sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/PACKAGES.TXT | rev |\
+     cut -d- -f3- | sed 's/-/ /' | rev  >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+  echo "Creating $1 patches versions file PKGVER.TXT"
+  rm ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT
+  sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/patches/PACKAGES.TXT | rev |\
+     cut -d- -f3- | sed 's/-/ /' | rev  >> ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT
+elif [ "$1" == "SBO" ] ; then
+  echo "Creating $1 package versions file PKGVER.TXT"
+  rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+  # https://www.gnu.org/software/sed/manual/sed.html#Regexp-Addresses
+  sed -n '/SLACKBUILD NAME: /{s///;p};/SLACKBUILD VERSION:/{s///;p}' ${REPO_DB}/${REPO_VERSION}/SLACKBUILDS.TXT |\
+    # https://www.gnu.org/software/sed/manual/sed.html#Joining-lines
+    sed -e :a -e '$!N;s/\n  */ /;ta' -e 'P;D' >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+fi
+}
+
+
+get_requires(){
+  for PACKAGE in $@ ; do
+    if FILEPATH="$(grep -n "\/${PACKAGE}.info" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5)" ; then
+      FOUND=1
+      FILEPATH="$(echo "$FILEPATH" | head -1 | cut -d " " -f3)"
+      FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
+      #echo $FILE
+      if [ -e $FILE ] ; then 
+        REQ="$(cat "${REPO_DB}/${REPO_VERSION}/${FILEPATH}" | grep REQUIRES | head -1 | cut -d= -f2 | tr -d '"')"
+        echo "$PACKAGE: $REQ"
+        REQUIRES+=($REQ)
+      fi
+    else
+      FOUND=0
+    fi
+  done
+}
+
+
+
+
 ## # find file path 
 ## where(){
 ##   if [ $# == 1 ] ; then

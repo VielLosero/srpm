@@ -1,26 +1,29 @@
 # Source file with repositories for srpm
 # 
 #
-# SOURCE --> where srpm ask for  
-# UPDATE --> If exist, and SOURCE is like file:// we make a mirror
+# SOURCE --> where srpm ask for. 
+# UPDATE --> If SOURCE is like "file://", like a  mirror, where we update from.
+#
+# DB ACTIVE --> all request store cache files/packages on db dir
+# DB PASSIVE --> only store minimal needed files on db (Changelog.txt,CHECKSUM.md5,CHECKSUM.md5.asc)
 #
 # SBo repository for Slackware 15.0 stable.
 REPO_SBO_NAME="sbo"
-REPO_SBO_ACTIVE="true"
 REPO_SBO_PRIORITY="10"
 REPO_SBO_VERSION="15.0"
 REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
 REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
 REPO_SBO_DBDIR="/var/lib/srpm"
+REPO_SBO_DB="active"
 #
 # Slackware repository
 REPO_SLACKWARE_NAME="slackware"
-REPO_SLACKWARE_ACTIVE="true"
 REPO_SLACKWARE_PRIORITY="10"
 REPO_SLACKWARE_VERSION="slackware64-15.0"
 REPO_SLACKWARE_SOURCE="file:///opt/slackware-repositories/x86/slackware/slackware64-15.0"
 REPO_SLACKWARE_UPDATE="rsync://mirrors.kernel.org/slackware/slackware64-15.0"
 REPO_SLACKWARE_DBDIR="/var/lib/srpm"
+REPO_SLACKWARE_DB="passive"
 #
 ## SBo repository for Slackware 15.0 stable.
 #REPO_SBO_NAME="sbo"

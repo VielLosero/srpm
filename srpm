@@ -18,7 +18,7 @@
 ## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.9
+VERSION=0.1.10
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/srpm)" ] ; then
@@ -45,6 +45,10 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=repository-check
           ;;
+        v|versions)
+          shift
+          CMD=repository-versions
+          ;;
       esac
       shift $#
       ;;
@@ -61,6 +65,11 @@ while [ -z "$CMD" ] ; do
     -rc|-rcheck|repository-check)
       shift
       CMD=repository-check
+      shift $#
+      ;;
+    -rv|-rversions|repository-versions)
+      shift
+      CMD=repository-versions
       shift $#
       ;;
     -p|pkg|package)
@@ -96,11 +105,15 @@ while [ -z "$CMD" ] ; do
           ;;
         m|mirror)
           shift
-          CMD=package-upgrade
+          CMD=package-mirror
           ;;
         l|locate)
           shift
-          CMD=package-upgrade
+          CMD=package-locate
+          ;;
+        v|version)
+          shift
+          CMD=package-version
           ;;
       esac
       #shift $#
@@ -141,6 +154,10 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-locate
       ;;
+    -pv|package-version) 
+      shift
+      CMD=package-version
+      ;;
     -v|ver|version)
       shift
        #CMD=version
@@ -151,12 +168,11 @@ while [ -z "$CMD" ] ; do
       #CMD=NULL
       echo ""
       echo "Usage:"
-      echo "      $(basename $0) {-r|repo|reposiroty} {i|info c|check u|update}"
+      echo "      $(basename $0) {-r|repo|reposiroty} {i|info c|check u|update v|versions}"
       echo "      $(basename $0) {-p|pkg|package} {i|install r|remove s|search}"
       echo "      $(basename $0)                  {d|description sf|search-file}"
       echo "      $(basename $0)                  {n|needed u|up|upgrade m|mirror}"
-      echo "      $(basename $0)                  {n|needed u|up|upgrade m|mirror}"
-      echo "      $(basename $0)                  {l|locate} PATTERN|PACKAGE"
+      echo "      $(basename $0)                  {l|locate v|version} PATTERN|PACKAGE"
       echo "      $(basename $0) {-v|version}"
       exit 0
     ;;
@@ -175,6 +191,9 @@ case "$CMD" in
     ;;
   repository-check)
     /usr/libexec/srpm/srpm-repository check
+    ;;
+  repository-versions)
+    /usr/libexec/srpm/srpm-repository versions
     ;;
   package-install)
     /usr/libexec/srpm/srpm-package install $@
@@ -202,5 +221,8 @@ case "$CMD" in
     ;;
   package-locate)
     /usr/libexec/srpm/srpm-package locate $@ 
+    ;;
+  package-version)
+    /usr/libexec/srpm/srpm-package version $@ 
     ;;
 esac

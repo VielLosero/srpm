@@ -176,11 +176,19 @@ EOF
   #check md5sum of ChangeLog.txt
   #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
 
-  
 
 done
 }
 
+#recreate packages versions on db.
+versions(){ 
+gettags_from_config_file
+for TAG in $REPO_TAGS ; do  
+  getrepo_vars
+  echo ""
+  make_packages_version_db $TAG
+done
+}
 
 while [ -n "$1" ] ; do
   case $1 in  
@@ -195,6 +203,10 @@ while [ -n "$1" ] ; do
     update)
       shift
       update
+      ;;
+    versions)
+      shift
+      versions
       ;;
     select)
       ;;

@@ -18,7 +18,7 @@
 ## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.10
+VERSION=0.1.11
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/srpm)" ] ; then
@@ -142,6 +142,10 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-needed
       ;;
+    -pnv|package-needed-version) 
+      shift
+      CMD=package-needed-version
+      ;;
     -pu|package-upgrade) 
       shift
       CMD=package-upgrade
@@ -212,6 +216,9 @@ case "$CMD" in
     ;;
   package-needed)
     /usr/libexec/srpm/srpm-package needed $@ 
+    ;;
+  package-needed-version)
+    $(basename $0) -pv $($(basename $0) -pn $@ | cut -d: -f1 | tac | awk '!_[$0]++' | tr  "\n" " ")
     ;;
   package-upgrade)
     /usr/libexec/srpm/srpm-package upgrade $@ 

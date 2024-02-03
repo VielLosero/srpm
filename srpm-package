@@ -21,6 +21,7 @@
 # Get function sources.
 source /usr/libexec/srpm/srpm.functions.sh
 
+TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
 
 while [ -n "$1" ] ; do
@@ -41,7 +42,7 @@ while [ -n "$1" ] ; do
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
-            sed 's:.*/::' | grep "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
+            sed 's:.*/::' | grep -i "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
           if [ -n "$FILEPATH" ] ; then
             echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
           fi
@@ -144,6 +145,33 @@ while [ -n "$1" ] ; do
       ;;
     upgrade)
       shift
+        #while read PKG ; do
+        #  #echo $PKG
+        #  LAST=$(/usr/sbin/srpm -pv $PKG | cut -d" " -f3)
+        #  CURRENT=$(/usr/sbin/srpm -pv $PKG | cut -d" " -f6)
+        #  #echo "LAST: $LAST CURRENT: $CURRENT"
+        #  if [[ "$LAST" != "$CURRENT" ]] ; then 
+        #    /usr/sbin/srpm -pv $PKG
+        #  fi
+        #done <<< $(ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f4- | rev) 
+        rm ${TMPDIR}/PKGVER_ALL.TXT 2>/dev/null
+        touch ${TMPDIR}/PKGVER_ALL.TXT
+        gettags_from_config_file
+        for TAG in $REPO_TAGS ; do  
+          getrepo_vars
+          if [ -e ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT ] ; then
+            cat ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
+          fi
+          if [ -e ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT ] ; then
+            cat ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
+          fi
+        done
+        # sort the file
+        sort -o ${TMPDIR}/PKGVER_ALL.TXT ${TMPDIR}/PKGVER_ALL.TXT 
+        rm ${TMPDIR}/PKGVER_INSTALLED.TXT 2>/dev/null
+        ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f3- | sed 's/-/ /'| rev | sort > ${TMPDIR}/PKGVER_INSTALLED.TXT 
+        diff -u ${TMPDIR}/PKGVER_ALL.TXT ${TMPDIR}/PKGVER_INSTALLED.TXT | grep ^+ | tail -n +2
+
       ;;
     mirror)
       shift
@@ -176,13 +204,13 @@ while [ -n "$1" ] ; do
         getrepo_vars
         for PACKAGE in $VERSIONLIST ; do
           if DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null)"; then
-            if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT 2>&1 >/dev/null ; then
+            if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
               DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
             fi
             #echo "DB_PKG_VER: $DB_PKG_VER"
             DB_PKG_VER=$( echo $DB_PKG_VER | cut -d " " -f2)
             #echo "DB_PKG_VER: $DB_PKG_VER"
-            INST_PKG_VER_LINE=$(ls -1 /var/log/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)
+            INST_PKG_VER_LINE=$(ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)
             #echo "INST_PKG_VER_LINE: $INST_PKG_VER_LINE"
             if [ ! -z $INST_PKG_VER_LINE ] ; then
               #echo $INST_PKG_VER_LINE

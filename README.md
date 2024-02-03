@@ -30,6 +30,7 @@ srpm -pn kicad | cut -d: -f1 | tac | awk '!_[$0]++'
 ```
 ### Search for needed packages and find version installed
 ```
+srpm -pnv kicad
 srpm -pv $(srpm -pn kicad | cut -d: -f1 | tac | awk '!_[$0]++' | tr  "\n" " ")
 Dont work?? --> srpm -pv $(srpm -pn kicad | cut -d: -f1 | tac | uniq | tr  "\n" " ")
 ```

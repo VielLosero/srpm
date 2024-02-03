@@ -206,14 +206,18 @@ while [ -n "$1" ] ; do
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
         for PACKAGE in $VERSIONLIST ; do
-          if DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null)"; then
-            if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
-              DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
-            fi
-            if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
-              DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT)"
-            fi
-            #echo "DB_PKG_VER: $DB_PKG_VER"
+          DB_PKG_VER=""
+          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null)"
+          fi
+          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
+          fi
+          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT)"
+          fi
+          #echo "DB_PKG_VER: $DB_PKG_VER"
+          if [ ! -z "$DB_PKG_VER" ] ; then
             DB_PKG_VER=$( echo $DB_PKG_VER | cut -d " " -f2)
             #echo "DB_PKG_VER: $DB_PKG_VER"
             INST_PKG_VER_LINE=$(ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License 
 # along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## srpm, - A simple package manager for slackbuilds.
+## srpm, - A simple repository & package manager for slackbuilds.
 
 source /usr/libexec/srpm/srpm.functions.sh
 

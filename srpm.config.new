@@ -2,3 +2,4 @@
 # confifgured in sbopkg.repositories with REPO_TAG_DBDIR variable
 #REPO_DB_DIR=/var/lib/srpm
 
+# vim:sw=2:ts=2:et:

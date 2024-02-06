@@ -18,7 +18,7 @@
 ## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.12
+VERSION=0.1.13
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/srpm)" ] ; then
@@ -115,6 +115,10 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=package-version
           ;;
+        f|forced)
+          shift
+          CMD=package-forced
+          ;;
       esac
       #shift $#
       ;;
@@ -162,6 +166,10 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-version
       ;;
+    -pf|package-forced) 
+      shift
+      CMD=package-forced
+      ;;
     -v|ver|version)
       shift
        #CMD=version
@@ -176,7 +184,7 @@ while [ -z "$CMD" ] ; do
       echo "      $(basename $0) {-p|pkg|package} {i|install r|remove s|search}"
       echo "      $(basename $0)                  {d|description sf|search-file}"
       echo "      $(basename $0)                  {n|needed u|up|upgrade m|mirror}"
-      echo "      $(basename $0)                  {l|locate v|version} PATTERN|PACKAGE"
+      echo "      $(basename $0)                  {l|locate v|version f|forced} PATTERN|PACKAGE"
       echo "      $(basename $0) {-v|version}"
       exit 0
     ;;
@@ -232,4 +240,9 @@ case "$CMD" in
   package-version)
     /usr/libexec/srpm/srpm-package version $@ 
     ;;
+  package-forced)
+    /usr/libexec/srpm/srpm-package forced $@ 
+    ;;
 esac
+
+# vim:sw=2:ts=2:et:

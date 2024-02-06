@@ -11,3 +11,5 @@ config() {
 }
 config etc/srpm/srpm.config.new
 config etc/srpm/srpm.repositories.new
+
+# vim:sw=2:ts=2:et:

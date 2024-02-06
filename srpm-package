@@ -202,34 +202,63 @@ while [ -n "$1" ] ; do
       shift
       VERSIONLIST=$@
       shift $#
-      gettags_from_config_file
-      for TAG in $REPO_TAGS ; do  
-        getrepo_vars
-        for PACKAGE in $VERSIONLIST ; do
-          DB_PKG_VER=""
+      for PACKAGE in $VERSIONLIST ; do
+        DB_PKG_VER=""
+        FOUND=""
+        INSTALLED=""
+        gettags_from_config_file
+        for TAG in $REPO_TAGS ; do  
+          getrepo_vars
           if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
-            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null)"
-          fi
-          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            FOUND="1"
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT)"
+          elif grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            FOUND="1"
             DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
-          fi
-          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+          elif grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            FOUND="1"
             DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT)"
           fi
+        done
           #echo "DB_PKG_VER: $DB_PKG_VER"
           if [ ! -z "$DB_PKG_VER" ] ; then
             DB_PKG_VER=$( echo $DB_PKG_VER | cut -d " " -f2)
             #echo "DB_PKG_VER: $DB_PKG_VER"
-            INST_PKG_VER_LINE=$(ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)
-            #echo "INST_PKG_VER_LINE: $INST_PKG_VER_LINE"
-            if [ ! -z $INST_PKG_VER_LINE ] ; then
-              #echo $INST_PKG_VER_LINE
-              INST_PKG_VER="$(ls -1 /var/lib/pkgtools/packages/ | sed -n "${INST_PKG_VER_LINE}p" | rev | cut -d- -f3 | rev)"
-              #echo "LAST: ${DB_PKG_VER} INSTALLED: ${INST_PKG_VER}"
-            else
-              INST_PKG_VER="Not installed."
-            fi
+          else
+            DB_PKG_VER="Not in repo!!."
+          fi
+          INST_PKG_VER_LINE=$(ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f4- | rev | grep -n "^${PACKAGE}$" | cut -d: -f1)
+          #echo "INST_PKG_VER_LINE: $INST_PKG_VER_LINE"
+          if [ ! -z $INST_PKG_VER_LINE ] ; then
+            INSTALLED="1"
+            #echo $INST_PKG_VER_LINE
+            INST_PKG_VER="$(ls -1 /var/lib/pkgtools/packages/ | sed -n "${INST_PKG_VER_LINE}p" | rev | cut -d- -f3 | rev)"
+            #echo "LAST: ${DB_PKG_VER} INSTALLED: ${INST_PKG_VER}"
+          else
+            INST_PKG_VER="Not installed."
+          fi
+          if [ "$FOUND" == "1" ] || [ "$INSTALLED" == "1" ] ; then 
             echo "${PACKAGE}: last ${DB_PKG_VER} ; current ${INST_PKG_VER}"
+          fi
+      done
+      ;;
+    forced)
+      shift
+      FORCEDLIST=$@
+      shift $#
+      rm ${TMPDIR}/PKG_INSTALLED.TXT 2>/dev/null
+      ls -1 /var/lib/pkgtools/packages/ | rev | cut -d- -f3- |cut -d- -f2- |rev | sort > ${TMPDIR}/PKG_INSTALLED.TXT
+      gettags_from_config_file
+      for TAG in $REPO_TAGS ; do  
+        getrepo_vars
+        for PACKAGE in $FORCEDLIST ; do
+          if [ "$TAG" == "SLACKWARE" ] ; then
+            continue
+          elif [ "$TAG" == "SBO" ] ; then
+            rm ${TMPDIR}/REQUIRES_FOUND.TXT 2>/dev/null
+            cat ${REPO_DB}/${REPO_VERSION}/REQUIRES.TXT | grep -E " ${PACKAGE} |\"${PACKAGE}|${PACKAGE}\"" | \
+              cut -d: -f1- |rev | cut -d/ -f1 | cut -d: -f3- | cut -d. -f 2- | rev | sort > ${TMPDIR}/REQUIRES_FOUND.TXT
+            diff -u ${TMPDIR}/PKG_INSTALLED.TXT ${TMPDIR}/REQUIRES_FOUND.TXT | grep "^ "
           fi
         done
       done
@@ -244,3 +273,4 @@ done
 
 
 
+# vim:sw=2:ts=2:et:

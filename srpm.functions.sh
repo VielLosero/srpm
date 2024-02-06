@@ -35,27 +35,37 @@ SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"
 # Slackware ans SBO have diferent files to get package versions.
 # I think the easy way is to make a little file with package version to uniform the queri on the script.
 make_packages_version_db(){
-if [ "$1" == "SLACKWARE" ] ; then
-  echo "Creating $1 patches versions file PKGVER.TXT"
-  rm ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT
-  sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/patches/PACKAGES.TXT | rev |\
-     cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT
-  echo "Creating $1 extra versions file PKGVER.TXT"
-  rm ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT
-  sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/extra/PACKAGES.TXT | rev |\
-     cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT
-  echo "Creating $1 package versions file PKGVER.TXT"
-  rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
-  sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/PACKAGES.TXT | rev |\
-     cut -d- -f3- | sed 's/-/ /' | rev | sort >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
-elif [ "$1" == "SBO" ] ; then
-  echo "Creating $1 package versions file PKGVER.TXT"
-  rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
-  # https://www.gnu.org/software/sed/manual/sed.html#Regexp-Addresses
-  sed -n '/SLACKBUILD NAME: /{s///;p};/SLACKBUILD VERSION:/{s///;p}' ${REPO_DB}/${REPO_VERSION}/SLACKBUILDS.TXT |\
-    # https://www.gnu.org/software/sed/manual/sed.html#Joining-lines
-    sed -e :a -e '$!N;s/\n  */ /;ta' -e 'P;D' | sort >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
-fi
+  if [ "$1" == "SLACKWARE" ] ; then
+    echo "Creating $1 patches versions file PKGVER.TXT"
+    rm ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT 2>/dev/null
+    sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/patches/PACKAGES.TXT | rev |\
+       cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT
+    echo "Creating $1 extra versions file PKGVER.TXT"
+    rm ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT 2>/dev/null
+    sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/extra/PACKAGES.TXT | rev |\
+       cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT
+    echo "Creating $1 package versions file PKGVER.TXT"
+    rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null
+    sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB}/${REPO_VERSION}/PACKAGES.TXT | rev |\
+       cut -d- -f3- | sed 's/-/ /' | rev | sort >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+  elif [ "$1" == "SBO" ] ; then
+    echo "Creating $1 package versions file PKGVER.TXT"
+    rm ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT 2>/dev/null 
+    # https://www.gnu.org/software/sed/manual/sed.html#Regexp-Addresses
+    sed -n '/SLACKBUILD NAME: /{s///;p};/SLACKBUILD VERSION:/{s///;p}' ${REPO_DB}/${REPO_VERSION}/SLACKBUILDS.TXT |\
+      # https://www.gnu.org/software/sed/manual/sed.html#Joining-lines
+      sed -e :a -e '$!N;s/\n  */ /;ta' -e 'P;D' | sort >> ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT
+  fi
+}
+
+make_packages_requires_db(){
+  if [ "$1" == "SLACKWARE" ] ; then
+    echo "TODO: implement slackdep "
+  elif [ "$1" == "SBO" ] ; then
+    echo "Creating $1  db file REQUIRES.TXT"
+    rm ${REPO_DB}/${REPO_VERSION}/REQUIRES.TXT 2>/dev/null
+    find ${REPO_DB}/${REPO_VERSION}/  -name "*.info" -exec grep -H -n REQUIRES {} \; > ${REPO_DB}/${REPO_VERSION}/REQUIRES.TXT
+  fi
 }
 
 
@@ -109,4 +119,4 @@ get_requires(){
 
 
 
-
+# vim:sw=2:ts=2:et:

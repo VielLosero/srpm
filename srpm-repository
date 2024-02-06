@@ -187,6 +187,7 @@ for TAG in $REPO_TAGS ; do
   getrepo_vars
   echo ""
   make_packages_version_db $TAG
+  make_packages_requires_db $TAG
 done
 }
 
@@ -219,3 +220,5 @@ while [ -n "$1" ] ; do
       ;;
   esac
 done
+
+# vim:sw=2:ts=2:et:

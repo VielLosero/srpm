@@ -52,3 +52,6 @@ REPO_SLACKWARE_DB="passive"
 ## REPO_SBO-HTTPS_ACTIVE="false"
 ## REPO_SBO-HTTPS_PRIORITY="30"
 ## REPO_SBO-HTTPS_MIRROR="https://slackbuilds.org/slackbuilds/15.0/"
+
+
+# vim:sw=2:ts=2:et:

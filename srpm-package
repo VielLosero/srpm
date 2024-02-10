@@ -31,6 +31,11 @@ while [ -n "$1" ] ; do
       ;;
     remove)
       shift
+      REMOVEARGS=$@
+      shift $#
+      echo "*** srpm -pr act as frontend for removepkg ***"
+      echo "*** For more info use man removepkg ***"
+      removepkg $REMOVEARGS | sed 's/removepkg/srpm -pr/g'
       ;;
     search)
       shift
@@ -143,7 +148,7 @@ while [ -n "$1" ] ; do
         done
       done
       ;;
-    upgrade)
+    unattended)
       shift
         #while read PKG ; do
         #  #echo $PKG

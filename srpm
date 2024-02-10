@@ -18,7 +18,7 @@
 ## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.13
+VERSION=0.1.14
 
 # Check if pkg db is started.
 if [ -z "$(ls -A /var/lib/srpm)" ] ; then
@@ -99,9 +99,9 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=package-needed
           ;;
-        u|up|upgrade)
+        u|up|unattended)
           shift
-          CMD=package-upgrade
+          CMD=package-unattended
           ;;
         m|mirror)
           shift
@@ -150,9 +150,9 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-needed-version
       ;;
-    -pu|package-upgrade) 
+    -pu|package-unattended) 
       shift
-      CMD=package-upgrade
+      CMD=package-unattended
       ;;
     -pm|package-mirror) 
       shift
@@ -183,7 +183,7 @@ while [ -z "$CMD" ] ; do
       echo "      $(basename $0) {-r|repo|reposiroty} {i|info c|check u|update v|versions}"
       echo "      $(basename $0) {-p|pkg|package} {i|install r|remove s|search}"
       echo "      $(basename $0)                  {d|description sf|search-file}"
-      echo "      $(basename $0)                  {n|needed u|up|upgrade m|mirror}"
+      echo "      $(basename $0)                  {n|needed u|unattended m|mirror}"
       echo "      $(basename $0)                  {l|locate v|version f|forced} PATTERN|PACKAGE"
       echo "      $(basename $0) {-v|version}"
       exit 0
@@ -228,8 +228,8 @@ case "$CMD" in
   package-needed-version)
     $(basename $0) -pv $($(basename $0) -pn $@ | cut -d: -f1 | tac | awk '!_[$0]++' | tr  "\n" " ")
     ;;
-  package-upgrade)
-    /usr/libexec/srpm/srpm-package upgrade $@ 
+  package-unattended)
+    /usr/libexec/srpm/srpm-package unattended $@ 
     ;;
   package-mirror)
     /usr/libexec/srpm/srpm-package mirror $@ 

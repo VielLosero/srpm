@@ -28,6 +28,65 @@ while [ -n "$1" ] ; do
   case $1 in  
     install)
       shift
+      LISTINSTALL=$@
+      shift $#
+      gettags_from_config_file
+      for PACKAGE in $LISTINSTALL ; do
+        FOUND=""
+        for TAG in $REPO_TAGS ; do  
+          getrepo_vars
+					if [ $TAG == "SLACKWARE" ] ; then
+  				  for FOUND_PKG in $(grep "${PACKAGE}.*.asc$" ${REPO_DB_SOURCE}/CHECKSUMS.md5 )  ; do
+    				  if [ "$(echo $FOUND_PKG |rev|cut -d- -f4-|cut -d/ -f1|rev)" == "$PACKAGE" ] ; then
+                echo "-----------------------------------"
+      				  echo "${TAG}: ${REPO_DB_SOURCE}/$FOUND_PKG"
+    				  fi
+					  done
+          fi
+          if [ $TAG == "SBO" ] ; then
+  				  for FOUND_PKG in $(grep "$PACKAGE.*.asc$" ${REPO_DB_SOURCE}/CHECKSUMS.md5 )  ; do
+    				  if [ "$(echo $FOUND_PKG |rev|cut -d. -f4-|cut -d/ -f1|rev)" == "$PACKAGE" ] ; then
+                echo "-----------------------------------"
+      				  echo "${TAG}: ${REPO_DB_SOURCE}/$FOUND_PKG"
+    				  fi
+            done
+          fi
+          echo "-----------------------------------"
+          echo "use gpg --verify file.asc to check package"
+          echo "then if it's ok use installpkg for slackware packages"
+          echo "or extract in tmp download sources and use SlackBuild for slackbuilds"
+
+        #  if FILEPATH=$(grep "${PACKAGE}.*.asc$" ${REPO_DB_SOURCE}/patches/CHECKSUMS.md5 2>/dev/null) ; then
+        #    cd ${REPO_DB_SOURCE}/patches/
+        #    echo $FILEPATH | md5sum -c && FILEPATH=$(echo $FILEPATH | cut -d" " -f2) && \
+        #    gpg --verify ${REPO_DB_SOURCE}/patches/${FILEPATH}.asc &>/dev/null || bad_signature 
+        #    FOUND="$TAG patches/$FILEPATH"
+        #  elif FILEPATH=$(grep "${PACKAGE}.*.asc$" ${REPO_DB_SOURCE}/extra/CHECKSUMS.md5 2>/dev/null) ; then
+        #    cd ${REPO_DB_SOURCE}/extra/
+        #    echo $FILEPATH | md5sum -c && FILEPATH=$(echo $FILEPATH | cut -d" " -f2) && \
+        #    gpg --verify ${REPO_DB_SOURCE}/extra/${FILEPATH}.asc &>/dev/null || bad_signature
+        #    FOUND="$TAG extra/$FILEPATH"
+        #  elif FILEPATH=$(grep "${PACKAGE}.*.asc$" ${REPO_DB_SOURCE}/CHECKSUMS.md5 2>/dev/null) ; then
+        #    cd ${REPO_DB_SOURCE}/
+        #    echo $FILEPATH | md5sum -c && FILEPATH=$(echo $FILEPATH | cut -d" " -f2) && \
+        #    gpg --verify ${REPO_DB_SOURCE}/${FILEPATH}.asc &>/dev/null || bad_signature
+        #    FOUND="$TAG $FILEPATH"
+        #  fi
+        done
+        ## if don't find package
+        #if [ -z "$FOUND" ] ; then
+        #  echo "Package $PACKAGE not found"
+        #else
+        #  FOUND_REPO=$(echo $FOUND | cut -d" " -f1)
+        #  FOUND_PATH=$(echo $FOUND | cut -d" " -f2)
+        #  echo "${FOUND_REPO}: installing ${REPO_DB_SOURCE}/$FOUND_PATH"
+        #  if [ "$FOUND_REPO" == "SBO" ] ; then
+        #    echo "sbopkg -i $PACKAGE"
+        #  elif [ "$FOUND_REPO" == "SLACKWARE" ] ; then
+        #    echo "slackpkg install $PACKAGE"
+        #  fi
+        #fi
+      done
       ;;
     remove)
       shift
@@ -46,7 +105,7 @@ while [ -n "$1" ] ; do
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
-          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
+          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB_SOURCE}/CHECKSUMS.md5 | \
             sed 's:.*/::' | grep -i "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
           if [ -n "$FILEPATH" ] ; then
             echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
@@ -66,17 +125,12 @@ while [ -n "$1" ] ; do
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
         for PACKAGE in $DESCLIST ; do
-          #grep -n ".*${PACKAGE}.*.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5
-          # sanity check, add  | head -1
-          #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1
-          #grep -n "${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3
-          #FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
-          FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
+          FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB_SOURCE}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
           if [ -n "$FILEPATH" ] ; then
-            FILE="${REPO_DB}/${REPO_VERSION}/${FILEPATH}"
+            FILE="${REPO_DB_SOURCE}/${FILEPATH}"
             #echo $FILE
             if [ -e $FILE ] ; then 
-              cat "${REPO_DB}/${REPO_VERSION}/${FILEPATH}" | tail +9
+              cat "${REPO_DB_SOURCE}/${FILEPATH}" | tail +9
             else
               # if no find on db try to download and show
               case $SOURCE_TYPE in
@@ -164,14 +218,14 @@ while [ -n "$1" ] ; do
         gettags_from_config_file
         for TAG in $REPO_TAGS ; do  
           getrepo_vars
-          if [ -e ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT ] ; then
-            cat ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
+          if [ -e ${REPO_DB}/patches/PKGVER.TXT ] ; then
+            cat ${REPO_DB}/patches/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
           fi
-          if [ -e ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT ] ; then
-            cat ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
+          if [ -e ${REPO_DB}/extra/PKGVER.TXT ] ; then
+            cat ${REPO_DB}/extra/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
           fi
-          if [ -e ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT ] ; then
-            cat ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
+          if [ -e ${REPO_DB}/PKGVER.TXT ] ; then
+            cat ${REPO_DB}/PKGVER.TXT >> ${TMPDIR}/PKGVER_ALL.TXT
           fi
         done
         # sort the file
@@ -193,7 +247,7 @@ while [ -n "$1" ] ; do
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
-          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5 | \
+          FILEPATH=$(grep "SlackBuild$"  ${REPO_DB_SOURCE}/CHECKSUMS.md5 | \
             cut -d. -f2- |sed 's/^\s*.//g'| grep "/${PACKAGE}.SlackBuild$" | cut -d. -f1 | \
             rev | cut -d/ -f2- | rev)
           if [ -n "$FILEPATH" ] ; then
@@ -214,15 +268,15 @@ while [ -n "$1" ] ; do
         gettags_from_config_file
         for TAG in $REPO_TAGS ; do  
           getrepo_vars
-          if grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
+          if grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
             FOUND="1"
-            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/PKGVER.TXT)"
-          elif grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT)"
+          elif grep "^${PACKAGE} " ${REPO_DB}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
             FOUND="1"
-            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/patches/PKGVER.TXT)"
-          elif grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/patches/PKGVER.TXT)"
+          elif grep "^${PACKAGE} " ${REPO_DB}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
             FOUND="1"
-            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/${REPO_VERSION}/extra/PKGVER.TXT)"
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/extra/PKGVER.TXT)"
           fi
         done
           #echo "DB_PKG_VER: $DB_PKG_VER"
@@ -261,7 +315,7 @@ while [ -n "$1" ] ; do
             continue
           elif [ "$TAG" == "SBO" ] ; then
             rm ${TMPDIR}/REQUIRES_FOUND.TXT 2>/dev/null
-            cat ${REPO_DB}/${REPO_VERSION}/REQUIRES.TXT | grep -E " ${PACKAGE} |\"${PACKAGE}|${PACKAGE}\"" | \
+            cat ${REPO_DB}/REQUIRES.TXT | grep -E " ${PACKAGE} |\"${PACKAGE}|${PACKAGE}\"" | \
               cut -d: -f1- |rev | cut -d/ -f1 | cut -d: -f3- | cut -d. -f 2- | rev | sort > ${TMPDIR}/REQUIRES_FOUND.TXT
             diff -u ${TMPDIR}/PKG_INSTALLED.TXT ${TMPDIR}/REQUIRES_FOUND.TXT | grep "^ "
           fi

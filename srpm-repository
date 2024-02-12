@@ -23,29 +23,6 @@ source /usr/libexec/srpm/srpm.functions.sh
 #REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
 TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
-## # Get all diferent tags from repositories in repo config file
-## # A  tag is like the repository name
-## gettags_from_config_file(){
-## REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-## }
-## 
-## getrepo_vars(){
-##   REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
-##   REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
-##   REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/${REPO_NAME}"
-##   # activate pkg db by make repo dir 
-##   [[ ! -d ${REPO_DB} ]] && mkdir -vp ${REPO_DB}
-##   REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-##   SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-##   REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
-##   # sanity check if no UPDATE on config take SOURCE
-##   if [ -z $REPO_UPDATE ] ; then
-##     REPO_UPDATE=$REPO_SOURCE
-##   fi
-##   echo "Get files from: $REPO_UPDATE"
-##   UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
-## }
-
 info(){
 #get repos (tags) from repo config file 
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
@@ -61,16 +38,19 @@ done
 }
 
 check(){
-#get repos (tags) from repo config file 
-#REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
+# get var (REPO_TAGS) from repositories config file
+# REPO_TAGS will contain repo id in uppercase ex:(SBO,SLACKWARE)
 gettags_from_config_file
-#clear
   echo "------------------------"
   echo "- Repository up to date"
   echo "------------------------"
+# process tags
 for TAG in $REPO_TAGS ; do  
+  # get vars for each repository
+  # REPO_NAME REPO_VERSION REPO_DB REPO_SOURCE SOURCE_TYPE REPO_UPDATE UPDATE_TYPE
+  # for a description of vars look into repository config file
   getrepo_vars 
-  mkdir -vp ${TMPDIR}/${REPO_NAME}
+  mkdir -p ${TMPDIR}/${REPO_NAME} 2>/dev/null
   case $UPDATE_TYPE in
     file)
       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
@@ -104,7 +84,7 @@ for TAG in $REPO_TAGS ; do
       ;;
   esac
   # check date on db
-  DB_UPDATED=$( cat ${REPO_DB}/${REPO_VERSION}/ChangeLog.txt  | head -1)
+  DB_UPDATED=$( cat ${REPO_DB_SOURCE}/ChangeLog.txt  | head -1)
   
   #echo "SOURCE: $SOURCE"
   #cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
@@ -134,9 +114,9 @@ for TAG in $REPO_TAGS ; do
   case $UPDATE_TYPE in
     http|https)
       SOURCE=$(echo $REPO_UPDATE)
-      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/ChangeLog.txt
-      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/CHECKSUMS.md5
-      wget -O ${REPO_DB}/${REPO_VERSION}  ${SOURCE}/CHECKSUMS.md5.asc
+      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/ChangeLog.txt
+      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5
+      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5.asc
       ;;
     ftp)
       echo $REPO_UPDATE
@@ -145,14 +125,22 @@ for TAG in $REPO_TAGS ; do
     rsync)
       case "$SOURCE_TYPE" in
         file)
-          LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
-          echo "rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
-          rsync -avP ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
-          if [ -L ${REPO_DB}/${REPO_VERSION} ] ; then
-            true
+          if [ -z $(pgrep rsync) ] ; then
+            LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
+            echo "rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
+            rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
+            if [ -L ${REPO_DB_SOURCE} ] ; then
+              true
+            else
+              # TODO: sanity chek if some put source file from ${REPO_DB_SOURCE} (srpm/repositories/...)
+              # don't use rm -rf because dangerouse, clean it manualy and remove dir is more safe.
+              # on a clean start that will work ... if start is not clean .... TODO
+              rmdir ${REPO_DB_SOURCE} || echo "Clean ${REPO_DB_SOURCE} and try again plz."
+              # create a symlink from mirror to db
+              ln -s ${LOCAL_MIRROR} ${REPO_DB_SOURCE}
+            fi
           else
-            # create a symlink from mirror to db
-            ln -s ${LOCAL_MIRROR} ${REPO_DB}/${REPO_VERSION}
+            echo "To many rsync run , wait a few and try again"
           fi
           ;;
         rsync)
@@ -160,7 +148,7 @@ for TAG in $REPO_TAGS ; do
           rsync -avP ${REPO_UPDATE}/ChangeLog.txt \
                      ${REPO_UPDATE}/CHECKSUMS.md5 \
                      ${REPO_UPDATE}/CHECKSUMS.md5.asc \
-                     ${REPO_DB}/${REPO_VERSION}"
+                     ${REPO_DB_SOURCE}"
 EOF
           ;;
       esac
@@ -170,12 +158,10 @@ EOF
       SOURCE=$(echo $REPO_UPDATE | sed 's%file:/%%')
       ;;
   esac
-  
   #  after update verify signature
-  gpg --verify "${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5.asc" "${REPO_DB}/${REPO_VERSION}/CHECKSUMS.md5"
+  gpg --verify "${REPO_DB_SOURCE}/CHECKSUMS.md5.asc" "${REPO_DB_SOURCE}/CHECKSUMS.md5"
   #check md5sum of ChangeLog.txt
   #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
-
 
 done
 }
@@ -204,6 +190,8 @@ while [ -n "$1" ] ; do
     update)
       shift
       update
+      # for late delete versions and do it auto from here after update, for test now leave separated
+      # update_versions
       ;;
     versions)
       shift

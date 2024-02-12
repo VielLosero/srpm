@@ -4,6 +4,19 @@ Simple Repository & Packet Manager, for me a.k.a srpm (slackware repository pack
 
 I hope this little contribution to the slackware comunity can help someone too.
 
+```
+[root@arcadia v]# srpm
+
+Usage:
+      srpm {-r|repo|reposiroty} {i|info c|check u|update v|versions}
+      srpm {-p|pkg|package} {i|install r|remove s|search}
+      srpm                  {d|description sf|search-file}
+      srpm                  {n|needed u|unattended m|mirror}
+      srpm                  {l|locate v|version f|forced} PATTERN|PACKAGE
+      srpm {-v|version}
+[root@arcadia v]#
+``` 
+
 ## Installation
 
 On a slackware sistem.
@@ -15,13 +28,10 @@ installpkg srpm-0.1.15-noarch-1.txz
 
 Clone/download the repository.
 
-Go to reposiroty and run the slackware package script.
-```
-sudo ./make.slackware.package
-```
-Respond yes to reset permisions.
+Go to reposiroty and run ./make.slackware.package.
 
-Example of sort macking the repository.
+Then install the package created on tmp file.
+
 ```
 [root@arcadia v]# sudo /home/data/git-repos/vielLosero/srpm/make.slackware.package
 /tmp/tmp.aqSKQz9lnJ
@@ -96,12 +106,7 @@ var/lib/srpm/
 WARNING:  zero length file install/douninst.sh
 
 Slackware package /tmp/srpm-0.1.14-noarch-1.txz created.
-```
-Then install the package.
-```
-sudo installpkg /tmp/srpm-0.1.14-noarch-1.txz
-```
-```
+
 [root@arcadia v]# sudo installpkg /tmp/srpm-0.1.14-noarch-1.txz
 Verifying package srpm-0.1.14-noarch-1.txz.
 Installing package srpm-0.1.14-noarch-1.txz:
@@ -111,6 +116,7 @@ Package srpm-0.1.14-noarch-1.txz installed.
 ```
 ## How it works example 1
 It is'nt nice i know but is under developement.
+
 Normaly i search for unatended packages, that requires update, remove for old, or ignore if we know what we are doing.
 ```
 [root@arcadia t1]# srpm -pu
@@ -227,7 +233,6 @@ libzen:
 ```
 
 ## Usage
-How i use it.
 Brew description for each option.
 ### Repository info.
 Show info for the repositories configured in /etc/srpm/srpm.repositories.
@@ -236,8 +241,11 @@ srpm repository info
 ```
 ### Repository check.
 Check if repositories up to date.
+
 From a fresh install, that no have updated yet only show Source date.
+
 After and update it will show local db date too.
+
 Always make a check before an update to view if there are updates availables.
 ```
 srpm repo check

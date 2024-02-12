@@ -6,13 +6,21 @@ I hope this little contribution to the slackware comunity can help someone too.
 
 ## Installation
 
+On a slackware sistem.
+```
+wget -O /tmp/srpm-0.1.15-noarch-1.txz  https://github.com/VielLosero/srpm/releases/download/v0.1.15/srpm-0.1.15-noarch-1.txz
+installpkg srpm-0.1.15-noarch-1.txz
+```
+## Manualy installation
+
 Clone/download the repository.
 
-Go to reposiroty and make the slackware package.
-Respond yes to reset permisions.
+Go to reposiroty and run the slackware package script.
 ```
 sudo ./make.slackware.package
 ```
+Respond yes to reset permisions.
+
 Example of sort macking the repository.
 ```
 [root@arcadia v]# sudo /home/data/git-repos/vielLosero/srpm/make.slackware.package
@@ -89,7 +97,7 @@ WARNING:  zero length file install/douninst.sh
 
 Slackware package /tmp/srpm-0.1.14-noarch-1.txz created.
 ```
-Install it.
+Then install the package.
 ```
 sudo installpkg /tmp/srpm-0.1.14-noarch-1.txz
 ```
@@ -278,15 +286,24 @@ srpm -pn kicad
 Sort example explained,
 Each package line contain main package followed with (:) and they required packages. 
 The first collumn are all the packages that kicad need to run, (itself too). Maybe in the column there are some repeateed package because a package is recursive required for 2 other packages. See triks to make a list with sort uniq.
+
 So kicad need OpenCASCADE glm ngspice unixODBC wxPython4 wxWidgets
+
 OpenCASCADE need VTK
+
 glm no need any
+
 ngspice no need any too
+
 unixODBC need attention, search inside repository to read the %README% file.
+
 wxPython4 need webkit2gtk python3-pathlib2 python3-attrdict
+
 wxWidgets no need any
+
 Then we start with the recursive dependencies, VTK
 etc.
+
 In finish, from down to up we need to install all the packages in the 1st column to run kicad.
 ```
 [root@arcadia t1]# srpm -pn kicad
@@ -395,6 +412,7 @@ srpm -pnv kicad
 ## Copyrights
 
 Slackware® is a Registered Trademark of Patrick Volkerding. 
+
 Linux® is a Registered Trademark of Linus Torvalds.
 
 ## License

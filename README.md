@@ -18,7 +18,7 @@ Usage:
 
 ## Installation
 
-On a slackware sistem.
+On a slackware system.
 ```
 wget -O /tmp/srpm-0.1.15-noarch-1.txz  https://github.com/VielLosero/srpm/releases/download/v0.1.15/srpm-0.1.15-noarch-1.txz
 installpkg srpm-0.1.15-noarch-1.txz
@@ -147,7 +147,7 @@ Whit srpm package version (srpm -pv) we can see it.
 [root@arcadia t1]# srpm -pv webkit2gtk
 webkit2gtk: last 2.42.5 ; current 2.42.4
 ```
-Then i check if some other package need update before webkit2gtk.
+Then i check for some other package that need be updated before webkit2gtk.
 ```
 [root@arcadia t1]# srpm -pnv webkit2gtk
 libwpe: last 1.14.2 ; current 1.14.2
@@ -160,7 +160,7 @@ webkit2gtk: last 2.42.5 ; current 2.42.4
 ```
 Seems all up to date. 
 
-I look if the package is from slackware or slackbuilds. Whit srpm package locate.
+Find in where repository the package are. slackware or slackbuilds. Whit srpm package locate.
 ```
 [root@arcadia t1]# srpm -pl webkit2gtk
 SBO: libraries/webkit2gtk
@@ -170,7 +170,7 @@ Then i install from sbopkg
 [root@arcadia t1]# sbopkg -i webkit2gtk
 ```
 ## How it works example 2
-An other example will be if we find an unatended packages that not are more in repo.
+Find an unatended package that are deleted from repo.
 ```
 [root@arcadia v]# srpm -pv python3-PyYAML
 python3-PyYAML: last Not in repo!!. ; current 5.3.1
@@ -206,7 +206,7 @@ Removing files:
 [root@arcadia v]# slackpkg install python-PyYAML
 ```
 ### How it works example 3
-In this example we can see how we need to update libmediainfo before update mediainfo.
+Update libmediainfo before update mediainfo.
 ```
 [root@arcadia tmp]# srpm -pu
 +android-tools 31.0.3p1
@@ -223,7 +223,7 @@ In this example we can see how we need to update libmediainfo before update medi
 +webkit2gtk 2.42.4
 [root@arcadia tmp]# srpm -pnv mediainfo
 libzen: last 0.4.41 ; current 0.4.41
-libmediainfo: last 24.01 ; current 23.11
+libmediainfo: last 24.01 ; current 23.11  <--- update before
 mediainfo: last 24.01 ; current 23.11
 [root@arcadia tmp]# srpm -pn mediainfo
 mediainfo: libmediainfo

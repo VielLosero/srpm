@@ -14,7 +14,6 @@ Usage:
       srpm                  {n|needed u|unattended m|mirror}
       srpm                  {l|locate v|version f|forced} PATTERN|PACKAGE
       srpm {-v|version}
-[root@arcadia v]#
 ``` 
 
 ## Installation
@@ -115,9 +114,14 @@ Executing install script for srpm-0.1.14-noarch-1.txz.
 Package srpm-0.1.14-noarch-1.txz installed.
 ```
 ## How it works example 1
-It is'nt nice i know but is under developement.
+It is'nt nice i know but is alfa version.
 
-Normaly i search for unatended packages, that requires update, remove for old, or ignore if we know what we are doing.
+Normaly i search for unatended packages whith srpm package unattended (srpm -pu).
+
+That old packages requires update, remove, or ignore if we know them like sbopkg.
+
+sbopkg is not in the repository. srpm too, i plan to add srpm.
+
 ```
 [root@arcadia t1]# srpm -pu
 +android-tools 31.0.3p1
@@ -135,15 +139,15 @@ Normaly i search for unatended packages, that requires update, remove for old, o
 +sbopkg 0.38.2
 +srpm 0.1.14
 +webkit2gtk 2.42.4
-[root@arcadia t1]#
 ```
-After find some unatended packages like webkit2gtk i check if realy have a new version
+After find some unatended packages like webkit2gtk i check for new version.
+
+Whit srpm package version (srpm -pv) we can see it. 
 ```
 [root@arcadia t1]# srpm -pv webkit2gtk
 webkit2gtk: last 2.42.5 ; current 2.42.4
-[root@arcadia t1]#
 ```
-Then i check if some other package need update before 
+Then i check if some other package need update before webkit2gtk.
 ```
 [root@arcadia t1]# srpm -pnv webkit2gtk
 libwpe: last 1.14.2 ; current 1.14.2
@@ -153,9 +157,10 @@ wpebackend-fdo: last 1.14.2 ; current 1.14.2
 geoclue2: last 2.6.0 ; current 2.6.0
 bubblewrap: last 0.8.0 ; current 0.8.0
 webkit2gtk: last 2.42.5 ; current 2.42.4
-[root@arcadia t1]# 
 ```
-I look if the package is from slackware or slackbuilds
+Seems all up to date. 
+
+I look if the package is from slackware or slackbuilds. Whit srpm package locate.
 ```
 [root@arcadia t1]# srpm -pl webkit2gtk
 SBO: libraries/webkit2gtk
@@ -169,29 +174,24 @@ An other example will be if we find an unatended packages that not are more in r
 ```
 [root@arcadia v]# srpm -pv python3-PyYAML
 python3-PyYAML: last Not in repo!!. ; current 5.3.1
-[root@arcadia v]#
 ```
 Package forced show nothing, package needed too.
 ```
 [root@arcadia v]# srpm -pf python3-PyYAML
 [root@arcadia v]# srpm -pn python3-PyYAML
-[root@arcadia v]#
 [root@arcadia v]# ls -la /var/log/packages/python3-PyYAML-5.3.1-x86_64-1_SBo
 -rw-r--r-- 1 root root 3411 Sep 15  2021 /var/log/packages/python3-PyYAML-5.3.1-x86_64-1_SBo
-[root@arcadia v]#
 ```
 So try to find what appens, search for PyYALM
 ```
 [root@arcadia v]# srpm -ps .*PyYAML
 SBO: python2-PyYAML
 SLACKWARE: python-PyYAML
-[root@arcadia v]#
 ```
 Ok seems that included on slackware so check
 ```
 [root@arcadia v]# srpm -pv python-PyYAML
 python-PyYAML: last 6.0 ; current Not installed.
-[root@arcadia v]#
 ```
 Ok remove package and install from slackware.
 ```
@@ -229,7 +229,6 @@ mediainfo: last 24.01 ; current 23.11
 mediainfo: libmediainfo
 libmediainfo: libzen
 libzen:
-[root@arcadia tmp]#
 ```
 
 ## Usage
@@ -339,7 +338,6 @@ python3-pyproject-hooks: python3-installer
 python3-flit_core:
 python3-installer: python3-flit_core
 python3-flit_core:
-[root@arcadia t1]#
 ```
 
 ### Package unattended

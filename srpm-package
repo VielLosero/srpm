@@ -268,15 +268,15 @@ while [ -n "$1" ] ; do
         gettags_from_config_file
         for TAG in $REPO_TAGS ; do  
           getrepo_vars
-          if grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
-            FOUND="1"
-            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT)"
-          elif grep "^${PACKAGE} " ${REPO_DB}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
+          if grep "^${PACKAGE} " ${REPO_DB}/patches/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
             FOUND="1"
             DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/patches/PKGVER.TXT)"
           elif grep "^${PACKAGE} " ${REPO_DB}/extra/PKGVER.TXT >/dev/null 1>/dev/null 2>/dev/null ; then
             FOUND="1"
             DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/extra/PKGVER.TXT)"
+          elif grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT  >/dev/null 1>/dev/null 2>/dev/null ; then
+            FOUND="1"
+            DB_PKG_VER="$(grep "^${PACKAGE} " ${REPO_DB}/PKGVER.TXT)"
           fi
         done
           #echo "DB_PKG_VER: $DB_PKG_VER"

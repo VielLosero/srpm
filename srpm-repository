@@ -172,7 +172,7 @@ gettags_from_config_file
 for TAG in $REPO_TAGS ; do  
   getrepo_vars
   echo ""
-  make_packages_version_db $TAG
+#  make_packages_version_db $TAG
   make_packages_requires_db $TAG
 done
 }

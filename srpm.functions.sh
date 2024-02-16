@@ -73,15 +73,50 @@ make_packages_version_db(){
 
 make_packages_requires_db(){
   if [ "$1" == "SLACKWARE" ] ; then
-    echo "Can't create $1  db file REQUIRES.TXT is in TODO tasks."
-    echo "Please think about contribute or donate. Thanks."
-    # ejemplo de sbo
-    # /var/lib/srpm/sbo/15.0/system/yubico-piv-tool/yubico-piv-tool.info:8:REQUIRES="gengetopt pcsc-lite"
+    echo "[*] Creating $1  db file REQUIRES.TXT"
+      rm ${REPO_DB}/MANIFEST.ALL 2>/dev/null
+    for dir in slackware64 extra patches ; do 
+      echo "[*] Removing old db files"
+      mkdir -p ${REPO_DB}/${dir} 2>/dev/null
+      rm ${REPO_DB}/${dir}/MANIFEST.Packages 2>/dev/null
+      echo "[*] Processing ${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2"
+      bzgrep -n "Package:" "${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2" | grep -n "Package:" > ${REPO_DB}/${dir}/MANIFEST.Packages
+      lines=$( wc -l ${REPO_DB}/${dir}/MANIFEST.Packages )
+      echo "[*] Processing lines $lines"
+      while read POINT ; do
+      POINT_ALL=$(echo $POINT | rev | cut -d- -f4-| rev)
+      if echo $POINT | grep -v "./source" 2>/dev/null >/dev/null ; then
+      START=$(echo $POINT_ALL | cut -d: -f2)
+      POINT1=$(($(echo $POINT_ALL | cut -d: -f1)+1))
+      STOP=$( sed -n "${POINT1}p" ${REPO_DB}/${dir}/MANIFEST.Packages | cut -d: -f2)
+      PACKAGE=$(echo $POINT_ALL |rev| cut -d/ -f1 | rev)
+      #echo $POINT_ALL
+      #echo "$PACKAGE: $START $STOP $POINT1"
+      echo "${PACKAGE}:${START},${STOP}:${dir}" >> ${REPO_DB}/MANIFEST.ALL
+      fi
+      done < ${REPO_DB}/${dir}/MANIFEST.Packages
+    done && echo "[+] MANIFEST.ALL created."
 
-  elif [ "$1" == "SBO" ] ; then
-    echo "Creating $1  db file REQUIRES.TXT"
-    rm ${REPO_DB}/REQUIRES.TXT 2>/dev/null
-    find ${REPO_DB_SOURCE}/  -name "*.info" -exec grep -H -n REQUIRES {} \; > ${REPO_DB}/REQUIRES.TXT
+    echo "[*] Processing "
+    #cat /var/lib/srpm/db/slackware/slackware64-15.0/MANIFEST.ALL | grep zlib
+    #zlib:103835,103865:patches
+    # bzcat /var/lib/srpm/repositories/slackware/slackware64-15.0/patches/MANIFEST.bz2| sed -n '103835,103865p'
+
+
+    for ELF_FILE in $(bzcat /var/lib/srpm/repositories/slackware/slackware64-15.0/slackware64/MANIFEST.bz2| sed -n '1107,1368p' | tail -n +4  | head -n -4  | rev | cut -d" " -f1 | rev | sed 's:^:/:' ) ; do
+        ldd $ELF_FILE 2>/dev/null | grep "=>" | awk '{print $3}' # >> $TMP_ELF
+      done
+
+
+
+
+
+
+
+ # elif [ "$1" == "SBO" ] ; then
+ #   echo "[*] Creating $1  db file REQUIRES.TXT"
+ #   rm ${REPO_DB}/REQUIRES.TXT 2>/dev/null
+ #   find ${REPO_DB_SOURCE}/  -name "*.info" -exec grep -H -n REQUIRES {} \; > ${REPO_DB}/REQUIRES.TXT
   fi
 }
 

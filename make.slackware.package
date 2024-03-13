@@ -18,6 +18,7 @@ mkdir -vp var/lib/srpm
 cp ${CWD}/srpm usr/sbin
 cp ${CWD}/srpm.config.new etc/srpm
 cp ${CWD}/srpm.repositories.new etc/srpm
+cp ${CWD}/srpm-db usr/libexec/srpm
 cp ${CWD}/srpm-package usr/libexec/srpm
 cp ${CWD}/srpm-repository usr/libexec/srpm
 cp ${CWD}/srpm.functions.sh usr/libexec/srpm

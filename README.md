@@ -22,101 +22,20 @@ On a slackware system.
 ```
 wget -O /tmp/srpm-0.1.15-noarch-1.txz  https://github.com/VielLosero/srpm/releases/download/v0.1.15/srpm-0.1.15-noarch-1.txz
 installpkg srpm-0.1.15-noarch-1.txz
-```
-## Manualy installation
 
-Clone/download the repository.
+## Fist run
 
-Go to reposiroty and run ./make.slackware.package.
+On the fisrt run we need to config our repo file at /etc/srpm/srpm.repositories or leave it as default. Then update the repository and the database.
 
-Then install the package created on tmp file.
+Check for updates: srpm -rc , to check 
+Update repository: srpm -ru , to update the database of packages.
+Create little db : srpm -rv , to make needed files to search internals like versions ...
 
-```
-[root@arcadia v]# sudo /home/data/git-repos/vielLosero/srpm/make.slackware.package
-/tmp/tmp.aqSKQz9lnJ
-mkdir: created directory 'usr'
-mkdir: created directory 'usr/sbin'
-mkdir: created directory 'etc'
-mkdir: created directory 'etc/srpm'
-mkdir: created directory 'usr/libexec'
-mkdir: created directory 'usr/libexec/srpm'
-mkdir: created directory 'var'
-mkdir: created directory 'var/lib'
-mkdir: created directory 'var/lib/srpm'
-
-Slackware package maker, version 3.14159265.
-
-Searching for symbolic links:
-
-No symbolic links were found, so we won't make an installation script.
-You can make your own later in ./install/doinst.sh and rebuild the
-package if you like.
-
-This next step is optional - you can set the directories in your package
-to some sane permissions. If any of the directories in your package have
-special permissions, then DO NOT reset them here!
-
-Would you like to reset all directory permissions to 755 (drwxr-xr-x) and
-directory ownerships to root.root ([y]es, [n]o)? y
-
-mode of '.' changed from 0700 (rwx------) to 0755 (rwxr-xr-x)
-mode of './install' retained as 0755 (rwxr-xr-x)
-mode of './var' retained as 0755 (rwxr-xr-x)
-mode of './var/lib' retained as 0755 (rwxr-xr-x)
-mode of './var/lib/srpm' retained as 0755 (rwxr-xr-x)
-mode of './etc' retained as 0755 (rwxr-xr-x)
-mode of './etc/srpm' retained as 0755 (rwxr-xr-x)
-mode of './usr' retained as 0755 (rwxr-xr-x)
-mode of './usr/libexec' retained as 0755 (rwxr-xr-x)
-mode of './usr/libexec/srpm' retained as 0755 (rwxr-xr-x)
-mode of './usr/sbin' retained as 0755 (rwxr-xr-x)
-ownership of '.' retained as root:root
-ownership of './install' retained as root:root
-ownership of './var' retained as root:root
-ownership of './var/lib' retained as root:root
-ownership of './var/lib/srpm' retained as root:root
-ownership of './etc' retained as root:root
-ownership of './etc/srpm' retained as root:root
-ownership of './usr' retained as root:root
-ownership of './usr/libexec' retained as root:root
-ownership of './usr/libexec/srpm' retained as root:root
-ownership of './usr/sbin' retained as root:root
-Creating Slackware package:  /tmp/srpm-0.1.14-noarch-1.txz
-
-./
-etc/
-etc/srpm/
-etc/srpm/srpm.config.new
-etc/srpm/srpm.repositories.new
-install/
-install/doinst.sh
-install/douninst.sh
-usr/
-usr/libexec/
-usr/libexec/srpm/
-usr/libexec/srpm/srpm-package
-usr/libexec/srpm/srpm-repository
-usr/libexec/srpm/srpm.functions.sh
-usr/sbin/
-usr/sbin/srpm
-var/
-var/lib/
-var/lib/srpm/
-WARNING:  zero length file install/douninst.sh
-
-Slackware package /tmp/srpm-0.1.14-noarch-1.txz created.
-
-[root@arcadia v]# sudo installpkg /tmp/srpm-0.1.14-noarch-1.txz
-Verifying package srpm-0.1.14-noarch-1.txz.
-Installing package srpm-0.1.14-noarch-1.txz:
-PACKAGE DESCRIPTION:
-Executing install script for srpm-0.1.14-noarch-1.txz.
-Package srpm-0.1.14-noarch-1.txz installed.
 ```
 ## How it works example 1
 It is'nt nice i know but is alfa version.
 
-Normaly i search for unatended packages whith srpm package unattended (srpm -pu).
+Search for unatended packages whith: srpm package unattended (srpm -pu).
 
 That old packages requires update, remove, or ignore if we know them like sbopkg.
 

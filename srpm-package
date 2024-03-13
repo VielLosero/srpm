@@ -21,8 +21,17 @@
 # Get function sources.
 source /usr/libexec/srpm/srpm.functions.sh
 
-TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
+# if db not started exit
+if [ -z "$(ls -A $SRPM_DB_DIR)" -o -z "$(ls -A $SRPM_REPO)" ] ; then
+  echo "DB empty. Please first run $(basename $0) db create" 
+  exit 1
+fi
+#if [ -z "$(ls -A ${SRPM_DIR})" ] ; then
+#  echo "DB empty. Please first run $(basename $0) db create" 
+#  exit 1
+#fi
 
+TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
 while [ -n "$1" ] ; do
   case $1 in  
@@ -105,13 +114,47 @@ while [ -n "$1" ] ; do
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
         for PACKAGE in $SEARCHLIST ; do
+        if [ "$TAG" == "SBO" ] ; then
           FILEPATH=$(grep "SlackBuild$"  ${REPO_DB_SOURCE}/CHECKSUMS.md5 | \
             sed 's:.*/::' | grep -i "^${PACKAGE}.*.SlackBuild$" | cut -d. -f1)
+        fi
+        if [ "$TAG" == "SLACKWARE" ] ; then
+          FILEPATH=$(grep "\.t.z$"  ${REPO_DB_SOURCE}/CHECKSUMS.md5 | \
+            sed 's:.*/::' | rev| cut -d- -f4- | rev | grep -i "^${PACKAGE}")
+        fi
           if [ -n "$FILEPATH" ] ; then
             echo "$FILEPATH" | sed "s/.*/${TAG}: &/"
           fi
         done
       done
+      # cambiamos la perspectiva , mejor descargar los CHECKSUM y copiarlos con SLACKWARE.CHECKSUM y SBO.CHECKSUM ??
+      # [root@arcadia tmp]# grep "\.asc$" /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 /opt/slackware-repositories/slackbuilds/15.0/CHECKSUMS.md5 | cut -d: -f2- | cut -d" " -f3- | grep -v "^\./source" | grep -v "^\./testing"
+      # [root@arcadia tmp]# grep "\.asc$" /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 /opt/slackware-repositories/slackbuilds/15.0/CHECKSUMS.md5 | cut -d: -f2- | cut -d" " -f3- | grep -v "^\./source" | grep -v "^\./testing" | sed 's:./::' | rev |sed 's:/: :' | rev | sed 's/.asc$//'|  grep aaa
+      #
+      #
+      # [root@arcadia packages]#   find . -type f -exec md5sum {} + | sed 's/$/.asc/'  >  /var/lib/srpm/INSTALLED.CHECKSUMS.md5
+      #
+      #sanity check
+      # grep "\.asc$" /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 /opt/slackware-repositories/slackbuilds/15.0/CHECKSUMS.md5 | cut -d: -f2- |  grep -v "\.asc$" 
+      #
+      #
+      #
+      #
+      #NEW SEARCH
+      #[root@arcadia packages]# cp /var/lib/srpm/slackbuilds-15.0.CHECKSUM.md5 /var/lib/srpm/SBO-15.0.CHECKSUM.md5
+      #[root@arcadia packages]# cp /var/lib/srpm/slackware64-15.0.CHECKSUM.md5 /var/lib/srpm/SLACKWARE64-15.0.CHECKSUM.md5
+      #[root@arcadia packages]# ls -1 | sed 's/$/.asc/' |sed 's:^:no  ./n/a/:'   >  /var/lib/srpm/INSTALLED.CHECKSUM.md5
+      #
+      #[root@arcadia packages]# grep "\.asc$" /var/lib/srpm/INSTALLED.CHECKSUM.md5 /var/lib/srpm/SLACKWARE64-15.0.CHECKSUM.md5 /var/lib/srpm/SBO-15.0.CHECKSUM.md5 | grep -v "  \./source" | grep -v "  \./testing" | cut -d/ -f5- | sed 's: ./::g' | sed 's/.CHECKSUM.md5:/: /' | cut -d" " -f1,3 | rev | sed 's:/: :' | rev | sed 's/\.asc$//' | grep " bash-5"
+      #[root@arcadia packages]# grep "\.asc$" /var/lib/srpm/INSTALLED.CHECKSUM.md5 /var/lib/srpm/SLACKWARE64-15.0.CHECKSUM.md5 /var/lib/srpm/SBO-15.0.CHECKSUM.md5 | grep -v "  \./source" | grep -v "  \./testing" | cut -d/ -f5- | sed 's: ./::g' | sed 's/.CHECKSUM.md5:/: /' | cut-d" " -f1,3 | rev | sed 's:/: :' | rev | sed 's/\.asc$//' | grep " ncompres"
+      #
+      #NEW SEARCH
+      #
+      #
+      #
+      #
+      #
+
       ;;
     search-file)
       shift
@@ -126,6 +169,9 @@ while [ -n "$1" ] ; do
         getrepo_vars
         for PACKAGE in $DESCLIST ; do
           FILEPATH=$(grep -n "\/${PACKAGE}.slack-desc" ${REPO_DB_SOURCE}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
+          if [ -z $FILEPATH ] ; then
+          FILEPATH=$(grep -n "\/slack-desc\.${PACKAGE}" ${REPO_DB_SOURCE}/CHECKSUMS.md5 | head -1 | cut -d " " -f3)
+          fi
           if [ -n "$FILEPATH" ] ; then
             FILE="${REPO_DB_SOURCE}/${FILEPATH}"
             #echo $FILE

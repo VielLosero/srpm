@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+## Copyright (c) 2024 VielLosero 
+#
+# This file is part of srpm. 
+# srpm is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by 
+# the Free Software Foundation, either version 3 of the License, 
+# or (at your option) any later version.
+#
+# srpm is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License 
+# along with srpm. If not, see <https://www.gnu.org/licenses/>. 
+#
+## srpm, - A simple repository & package manager for slackbuilds.
+
+# get functions 
+source /usr/libexec/srpm/srpm.functions.sh
+
+make_initial_srpm_structure(){
+  # create default /var/lib/srpm/{db,etc...}
+  [[ ! -d $SRPM_DIR ]] && mkdir -vp $SRPM_DIR
+  SRPM_DB_DIR="${SRPM_DIR}/db"
+  [[ ! -d $SRPM_DB_DIR ]] && mkdir -vp $SRPM_DB_DIR
+  SRPM_DB_FILES="${SRPM_DIR}/dbfiles"
+  [[ ! -d $SRPM_DB_FILES ]] && mkdir -vp $SRPM_DB_FILES
+  SRPM_REPO="${SRPM_DB_DIR}/srpm"
+  [[ ! -d $SRPM_REPO ]] && mkdir -vp ${SRPM_REPO}
+  gettags_from_config_file
+  # process tags to get SRPM_
+  for TAG in $REPO_TAGS ; do  
+  getrepo_vars 
+  [[ ! -d $SRPM_REPO_TAG ]] && mkdir -vp ${SRPM_REPO_TAG}
+  # make order dirs
+    for order_dir in 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z ; do
+    #echo $order_dir                                                     
+    # make first letter dir if not exist                                                                                           
+    [[ -d ${SRPM_REPO_TAG}/$order_dir ]] || mkdir -vp ${SRPM_REPO_TAG}/$order_dir                                    
+    done
+  done
+}
+
+update_packages_db(){
+  gettags_from_config_file
+  # process tags
+  for TAG in $REPO_TAGS ; do  
+    getrepo_vars 
+		if [ $TAG == "SLACKWARE" ] ; then
+      # cp or ln packages to p/package
+      for PACKAGE_LINE in $(grep "txz.asc$" ${REPO_DB_SOURCE}/CHECKSUMS.md5 | cut -d" " -f3) ; do
+        #echo $PACKAGE_LINE
+        PACKAGE_PATH="$(echo ${PACKAGE_LINE} | rev | cut -d/ -f2- | rev)"
+        #echo $PACKAGE_PATH
+        PACKAGE_FILE="$(echo ${PACKAGE_LINE} | rev | cut -d/ -f1 | rev)"
+        #echo $PACKAGE_FILE
+        PACKAGE_NAME="$(echo ${PACKAGE_FILE} | rev | cut -d- -f4- | rev)"
+        #echo $PACKAGE_NAME
+        PACKAGE_VERSION="$(echo ${PACKAGE_FILE} | rev | cut -d- -f3 | rev)"
+        #echo $PACKAGE_VERSION
+        PACKAGE_FIRST_LETTER="$(echo "${PACKAGE_NAME:0:1}" | tr '[:upper:]' '[:lower:]')"
+        #echo $PACKAGE_FIRST_LETTER
+        echo " ln -s ${REPO_DB_SOURCE}/${PACKAGE_PATH} ${SRPM_REPO_TAG}/${PACKAGE_FIRST_LETTER}/${PACKAGE_NAME}/${PACKAGE_FILE}" 
+        #echo "${REPO_DB_SOURCE}/${PACKAGE_PATH}" 
+      done
+    fi
+    #grep txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | cut -d" " -f3 |rev| cut -d. -f3- | rev |  awk 'BEGIN { FS = "-" } { print NF ; if (NF == 4) {NAME=$1 ; VERSION=$2 ; ARCH=$3 ; RELEASE=$4} ; if (NF == 5) {NAME=$1=$1"-"$2 ; VERSION=$3;  ; ARCH=$4 ; RELEASE=$5 } ; if (NF == 6) { NAME=$1=$1"-"$2"-"$3 ; VERSION=$4 ;  ; ARCH=$5 ; RELEASE=$6}   ;  print NAME" "VERSION" "ARCH" "RELEASE  } ' | awk -F/ '{ for(i=2;i<NF;i++)  PAT=PAT"/"$i ; print NF ; REST=$(NF);  print "."PAT" "REST ; PAT=""}'
+    #
+    #grep txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | awk '{print $1" "$2}' |  awk
+    #'BEGIN { FS = "-" } { if (NF == 4) {NAME=$1 ; VERSION=$2 ; ARCH=$3 ; RELEASE=$4} ; if (NF == 5) {NAME=$1=$1"-"$2 ; VERSION=$3;  ; ARCH=$4 ; RELEASE=$5 } ; if (NF == 6) { NAME=$1=$1"-"$2"-"$3 ; VERSION=$4 ;  ; ARCH=$5 ; RELEASE=$6}   ;  print  NAME" "VERSION" "ARCH" "RELEASE  } ' | awk -F/ '{ for(i=1;i<NF;i++)  PA=PA"/"$i ; print NF ; REST=$(NF);  print PA" "REST ; PA=""}' | awk '{gsub("\\."," ",$6) ; print $0}'
+    #
+    #[root@arcadia ~]# grep -n txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk 'BEGIN { FS = "-" } { if (NF == 4) {NAME=$1 ; VERSION=$2 ; ARCH=$3 ; RELEASE=$4} ; if (NF == 5) {NAME=$1=$1"-"$2 ; VERSION=$3;  ; ARCH=$4 ; RELEASE=$5 } ; if (NF == 6) { NAME=$1=$1"-"$2"-"$3 ; VERSION=$4 ;  ; ARCH=$5 ; RELEASE=$6} ; if (NF == 7) { NAME=$1=$1"-"$2"-"$3"-"$4 ; VERSION=$5 ;  ; ARCH=$6 ; RELEASE=$7} ; if (NF < 8) print  NAME" "VERSION" "ARCH" "RELEASE  ; if (NF >= 8) print "WARNING "$0 }' | awk -F/ '{ print $1"/"$2"/"$3" "$4 }' | awk '{gsub(".txz.asc"," txz",$7) ; print $0}'
+    #
+    #[root@arcadia ~]# grep -n txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev | awk '{print NF" "$0 } '
+    #
+    #[root@arcadia ~]# grep -n txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev |  awk '{gsub(".txz.asc"," txz",$7) ; print $0 }'
+    #
+    #[root@arcadia ~]# grep -n txz.asc$ /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev |  awk '{gsub(".txz.asc"," txz",$7) ; print $0 }' | awk '{print NF" "$0 } '
+    #
+
+    if [ $TAG == "SBO" ] ; then
+      true
+    fi
+  done
+}
+
+while [ -n "$1" ] ; do
+  case $1 in  
+    create)
+      shift
+      make_initial_srpm_structure
+      ;;
+    update)
+      shift
+      update_packages_db
+      ;;
+    delete)
+      shift
+      delete
+      ;;
+    *)
+      echo "USAGE:"
+      echo "      $0 : "
+      shift $#
+      ;;
+  esac
+done
+
+# vim:sw=2:ts=2:et:

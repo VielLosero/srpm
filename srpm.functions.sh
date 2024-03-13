@@ -2,6 +2,19 @@
 # Repository config file
 REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
 
+# Source srpm.config to get db dir
+. /etc/srpm/srpm.config || exit 1
+
+# Process CHECKSUM.md5 process_checksum "REPO_DIR" > sort.file
+process_checksum(){
+  DIR=$1
+grep -n txz.asc$ ${DIR}/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev |  awk '{gsub(".txz.asc"," txz",$7) ; print $0 }' 
+}
+
+# General vars
+SRPM_DB_DIR="${SRPM_DIR}/db"
+SRPM_REPO="${SRPM_DB_DIR}/srpm"
+
 # Get all diferent tags from repositories in repository config file
 # A  tag is like the repository name id in uppercase ex:(SBO,SLACKWARE)
 gettags_from_config_file(){
@@ -16,11 +29,13 @@ getrepo_vars(){
   # repository version ex:(15,slackware64_15.0,...)
   REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
   # where we store the neeeded files (like Changelog.txt ...) for fast check, or mirror link
-  REPO_DB_SOURCE="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/repositories/${REPO_NAME}/${REPO_VERSION}"
+  #REPO_DB_SOURCE="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/repositories/${REPO_NAME}/${REPO_VERSION}"
+  REPO_DB_SOURCE="${SRPM_DIR}/repositories/${REPO_NAME}/${REPO_VERSION}"
   # make repo source dir if not exist. NOTE: not needed to check every time, put out of function
   [[ ! -d ${REPO_DB_SOURCE} ]] && mkdir -vp ${REPO_DB_SOURCE}
   # separated db dir to put our files and leave a clean mirror
-  REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/db/${REPO_NAME}/${REPO_VERSION}"
+  #REPO_DB="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/db/${REPO_NAME}/${REPO_VERSION}"
+  REPO_DB="${SRPM_DIR}/db/${REPO_NAME}/${REPO_VERSION}"
   # make repo dir if not exist. NOTE: not needed to check every time, put out of function
   [[ ! -d ${REPO_DB} ]] && mkdir -vp ${REPO_DB}
   REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
@@ -32,7 +47,12 @@ getrepo_vars(){
   fi
   #echo "Get files from: $REPO_UPDATE"
   UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+  ##### SRPM vars
+  SRPM_REPO_VER=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SRPMVER" | cut -d= -f2 | tr -d '"')
+  SRPM_REPO_ARCH=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SRPMARCH" | cut -d= -f2 | tr -d '"')
+  SRPM_REPO_TAG=${SRPM_REPO}/${SRPM_REPO_ARCH}/${SRPM_REPO_VER}
 }
+
 
 # function that get Changelog date and number of packages inside a TAG for loop.
 get_Changelog_date_and_packages_number(){
@@ -45,23 +65,23 @@ SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"
 # I think the easy way is to make a little file with package version to uniform the queri on the script.
 make_packages_version_db(){
   if [ "$1" == "SLACKWARE" ] ; then
-    echo "Creating $1 patches versions file PKGVER.TXT"
+    echo "[*] Creating $1 patches versions file PKGVER.TXT"
     mkdir -p ${REPO_DB}/patches 2>/dev/null
     rm ${REPO_DB}/patches/PKGVER.TXT 2>/dev/null
     sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB_SOURCE}/patches/PACKAGES.TXT | rev |\
        cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/patches/PKGVER.TXT
-    echo "Creating $1 extra versions file PKGVER.TXT"
+    echo "[*] Creating $1 extra versions file PKGVER.TXT"
     mkdir -p ${REPO_DB}/extra 2>/dev/null
     rm ${REPO_DB}/extra/PKGVER.TXT 2>/dev/null
     sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB_SOURCE}/extra/PACKAGES.TXT | rev |\
        cut -d- -f3- | sed 's/-/ /' | rev  | sort >> ${REPO_DB}/extra/PKGVER.TXT
-    echo "Creating $1 package versions file PKGVER.TXT"
+    echo "[*] Creating $1 package versions file PKGVER.TXT"
     mkdir -p ${REPO_DB} 2>/dev/null
     rm ${REPO_DB}/PKGVER.TXT 2>/dev/null
     sed -n "/PACKAGE NAME:  /{s///;p}" ${REPO_DB_SOURCE}/PACKAGES.TXT | rev |\
        cut -d- -f3- | sed 's/-/ /' | rev | sort >> ${REPO_DB}/PKGVER.TXT
   elif [ "$1" == "SBO" ] ; then
-    echo "Creating $1 package versions file PKGVER.TXT"
+    echo "[*] Creating $1 package versions file PKGVER.TXT"
     mkdir -p ${REPO_DB} 2>/dev/null
     rm ${REPO_DB}/PKGVER.TXT 2>/dev/null 
     # https://www.gnu.org/software/sed/manual/sed.html#Regexp-Addresses
@@ -73,50 +93,43 @@ make_packages_version_db(){
 
 make_packages_requires_db(){
   if [ "$1" == "SLACKWARE" ] ; then
+    echo "TODO: $1  db file REQUIRES.TXT"
+    ## echo "[*] Creating $1  db file REQUIRES.TXT"
+    ##   rm ${REPO_DB}/MANIFEST.ALL 2>/dev/null
+    ## for dir in slackware64 extra patches ; do 
+    ##   echo "[*] Removing old db files"
+    ##   mkdir -p ${REPO_DB}/${dir} 2>/dev/null
+    ##   rm ${REPO_DB}/${dir}/MANIFEST.Packages 2>/dev/null
+    ##   echo "[*] Processing ${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2"
+    ##   bzgrep -n "Package:" "${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2" | grep -n "Package:" > ${REPO_DB}/${dir}/MANIFEST.Packages
+    ##   lines=$( wc -l ${REPO_DB}/${dir}/MANIFEST.Packages )
+    ##   echo "[*] Processing lines $lines"
+    ##   while read POINT ; do
+    ##   POINT_ALL=$(echo $POINT | rev | cut -d- -f4-| rev)
+    ##   if echo $POINT | grep -v "./source" 2>/dev/null >/dev/null ; then
+    ##   START=$(echo $POINT_ALL | cut -d: -f2)
+    ##   POINT1=$(($(echo $POINT_ALL | cut -d: -f1)+1))
+    ##   STOP=$( sed -n "${POINT1}p" ${REPO_DB}/${dir}/MANIFEST.Packages | cut -d: -f2)
+    ##   PACKAGE=$(echo $POINT_ALL |rev| cut -d/ -f1 | rev)
+    ##   #echo $POINT_ALL
+    ##   #echo "$PACKAGE: $START $STOP $POINT1"
+    ##   echo "${PACKAGE}:${START},${STOP}:${dir}" >> ${REPO_DB}/MANIFEST.ALL
+    ##   fi
+    ##   done < ${REPO_DB}/${dir}/MANIFEST.Packages
+    ## done && echo "[+] MANIFEST.ALL created."
+
+    ## echo "[*] Processing "
+
+    ## for ELF_FILE in $(bzcat ${SRPM_DIR}/repositories/slackware/slackware64-15.0/slackware64/MANIFEST.bz2| sed -n '1107,1368p' | tail -n +4  | head -n -4  | rev | cut -d" " -f1 | rev | sed 's:^:/:' ) ; do
+    ##     ldd $ELF_FILE 2>/dev/null | grep "=>" | awk '{print $3}' # >> $TMP_ELF
+    ##   done
+
+
+
+  elif [ "$1" == "SBO" ] ; then
     echo "[*] Creating $1  db file REQUIRES.TXT"
-      rm ${REPO_DB}/MANIFEST.ALL 2>/dev/null
-    for dir in slackware64 extra patches ; do 
-      echo "[*] Removing old db files"
-      mkdir -p ${REPO_DB}/${dir} 2>/dev/null
-      rm ${REPO_DB}/${dir}/MANIFEST.Packages 2>/dev/null
-      echo "[*] Processing ${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2"
-      bzgrep -n "Package:" "${REPO_DB_SOURCE}/${dir}/MANIFEST.bz2" | grep -n "Package:" > ${REPO_DB}/${dir}/MANIFEST.Packages
-      lines=$( wc -l ${REPO_DB}/${dir}/MANIFEST.Packages )
-      echo "[*] Processing lines $lines"
-      while read POINT ; do
-      POINT_ALL=$(echo $POINT | rev | cut -d- -f4-| rev)
-      if echo $POINT | grep -v "./source" 2>/dev/null >/dev/null ; then
-      START=$(echo $POINT_ALL | cut -d: -f2)
-      POINT1=$(($(echo $POINT_ALL | cut -d: -f1)+1))
-      STOP=$( sed -n "${POINT1}p" ${REPO_DB}/${dir}/MANIFEST.Packages | cut -d: -f2)
-      PACKAGE=$(echo $POINT_ALL |rev| cut -d/ -f1 | rev)
-      #echo $POINT_ALL
-      #echo "$PACKAGE: $START $STOP $POINT1"
-      echo "${PACKAGE}:${START},${STOP}:${dir}" >> ${REPO_DB}/MANIFEST.ALL
-      fi
-      done < ${REPO_DB}/${dir}/MANIFEST.Packages
-    done && echo "[+] MANIFEST.ALL created."
-
-    echo "[*] Processing "
-    #cat /var/lib/srpm/db/slackware/slackware64-15.0/MANIFEST.ALL | grep zlib
-    #zlib:103835,103865:patches
-    # bzcat /var/lib/srpm/repositories/slackware/slackware64-15.0/patches/MANIFEST.bz2| sed -n '103835,103865p'
-
-
-    for ELF_FILE in $(bzcat /var/lib/srpm/repositories/slackware/slackware64-15.0/slackware64/MANIFEST.bz2| sed -n '1107,1368p' | tail -n +4  | head -n -4  | rev | cut -d" " -f1 | rev | sed 's:^:/:' ) ; do
-        ldd $ELF_FILE 2>/dev/null | grep "=>" | awk '{print $3}' # >> $TMP_ELF
-      done
-
-
-
-
-
-
-
- # elif [ "$1" == "SBO" ] ; then
- #   echo "[*] Creating $1  db file REQUIRES.TXT"
- #   rm ${REPO_DB}/REQUIRES.TXT 2>/dev/null
- #   find ${REPO_DB_SOURCE}/  -name "*.info" -exec grep -H -n REQUIRES {} \; > ${REPO_DB}/REQUIRES.TXT
+    rm ${REPO_DB}/REQUIRES.TXT 2>/dev/null
+    find ${REPO_DB_SOURCE}/  -name "*.info" -exec grep -H -n REQUIRES {} \; > ${REPO_DB}/REQUIRES.TXT
   fi
 }
 

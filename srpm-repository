@@ -20,6 +20,17 @@
 
 source /usr/libexec/srpm/srpm.functions.sh
 
+# if db not started exit
+if [ -z "$(ls -A $SRPM_DB_DIR)" -o -z "$(ls -A $SRPM_REPO)" ] ; then
+  echo "DB empty. Please first run $(basename $0) db create" 
+  exit 1
+fi
+## Check if pkg db is started.
+#if [ -z "$(ls -A ${SRPM_DIR})" ] ; then
+#  echo "DB empty. Please first run $(basename $0) db create" 
+#  exit 1
+#fi
+
 #REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
 TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
@@ -74,8 +85,7 @@ for TAG in $REPO_TAGS ; do
       SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
       ;;
     rsync)
-      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/
-      get_Changelog_date_and_packages_number
+      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/  && get_Changelog_date_and_packages_number
       #SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
       #SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
       ;;
@@ -117,6 +127,10 @@ for TAG in $REPO_TAGS ; do
       wget -O ${REPO_DB_SOURCE}  ${SOURCE}/ChangeLog.txt
       wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5
       wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5.asc
+      wget -O ${REPO_DB_SOURCE}/patches  ${SOURCE}/patches/CHECKSUMS.md5
+      wget -O ${REPO_DB_SOURCE}/patches  ${SOURCE}/patches/CHECKSUMS.md5.asc
+      wget -O ${REPO_DB_SOURCE}/extra  ${SOURCE}/extra/CHECKSUMS.md5
+      wget -O ${REPO_DB_SOURCE}/extra  ${SOURCE}/extra/CHECKSUMS.md5.asc
       ;;
     ftp)
       echo $REPO_UPDATE
@@ -128,7 +142,7 @@ for TAG in $REPO_TAGS ; do
           if [ -z $(pgrep rsync) ] ; then
             LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
             echo "rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
-            rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
+            rsync -avP --progress --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
             if [ -L ${REPO_DB_SOURCE} ] ; then
               true
             else
@@ -164,6 +178,7 @@ EOF
   #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
 
 done
+echo "Remember to update version after each good update.!!"
 }
 
 #recreate packages versions on db.
@@ -171,11 +186,17 @@ versions(){
 gettags_from_config_file
 for TAG in $REPO_TAGS ; do  
   getrepo_vars
-  echo ""
-#  make_packages_version_db $TAG
+  # now update db
+  make_packages_version_db $TAG
   make_packages_requires_db $TAG
+  # update new dbfiles
+  # SRPM_DB_FILES="${SRPM_DIR}/dbfiles"
+  # Process CHECKSUM.md5 process_checksum "REPO_DIR" > sort.file
+  echo "Process new db files CHECKSUM"
+  process_checksum ${REPO_DB_SOURCE} > $SRPM_DB_FILES/Checksum.txt
 done
 }
+
 
 while [ -n "$1" ] ; do
   case $1 in  

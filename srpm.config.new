@@ -1,5 +1,6 @@
-# not used yet
 # confifgured in sbopkg.repositories with REPO_TAG_DBDIR variable
-#REPO_DB_DIR=/var/lib/srpm
+# directory to store srpm db and files.
+SRPM_DIR=/var/lib/srpm
+#SRPM_DB_DIR=/var/lib/srpm/db
 
 # vim:sw=2:ts=2:et:

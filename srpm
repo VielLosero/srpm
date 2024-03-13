@@ -18,18 +18,43 @@
 ## srpm, - A simple repository & package manager for Slackware Linux.
 
 # version
-VERSION=0.1.15
+VERSION=0.1.16
 
-# Check if pkg db is started.
-if [ -z "$(ls -A /var/lib/srpm)" ] ; then
-  echo "DB empty"
-fi
-# Check if pkg db is up to date.
 
 # Now process args.
 CMD=""
 while [ -z "$CMD" ] ; do
   case $1 in
+    -d|db|database)
+      shift
+      case $1 in
+        c|create)
+          shift
+          CMD=database-create
+          ;;
+        u|update)
+          shift
+          CMD=database-update
+          ;;
+        r|remove)
+          shift
+          CMD=database-remove
+          ;;
+      esac
+      shift $#
+      ;;
+    -dc|database-create)
+      shift
+      CMD=database-create
+      ;;
+    -du|database-update)
+      shift
+      CMD=database-update
+      ;;
+    -dd|database-delete)
+      shift
+      CMD=database-delete
+      ;;
     -r|repo|reposiroty)
       shift
       case $1 in 
@@ -185,6 +210,7 @@ while [ -z "$CMD" ] ; do
       echo "      $(basename $0)                  {d|description sf|search-file}"
       echo "      $(basename $0)                  {n|needed u|unattended m|mirror}"
       echo "      $(basename $0)                  {l|locate v|version f|forced} PATTERN|PACKAGE"
+      echo "      $(basename $0) {-d|db|database} {c|create u|update d|delete}"
       echo "      $(basename $0) {-v|version}"
       exit 0
     ;;
@@ -195,6 +221,15 @@ done
 
 # Case with comamnd
 case "$CMD" in
+  database-create)
+    /usr/libexec/srpm/srpm-db create
+    ;;
+  database-update)
+    /usr/libexec/srpm/srpm-db update
+    ;;
+  database-remove)
+    /usr/libexec/srpm/srpm-db remove
+    ;;
   repository-info)
     /usr/libexec/srpm/srpm-repository info
     ;;

@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+## Copyright (c) 2024 VielLosero 
+#
+# The program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by 
+# the Free Software Foundation, either version 3 of the License, 
+# or (at your option) any later version.
+#
+# The program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+# See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License 
+# along with this program. If not, see <https://www.gnu.org/licenses/>. 
+#
+## Description: srpm.SlackBuild, script to make srpm.
+## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# Sanity check, change to dir on this SlackBuild script are with the sources.
+cd $(dirname $0) ; CWD=$(pwd)
+# Temp dir.
+TMP=${TMP:-/tmp}
+# Where to build the package.
+PKG=$TMP/package-srpm
+
+# (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number)_(Tag).(Extension)
+# or (Package name)-(Year).(Month).(Day)-(arch)-(Build number)_(Tag).(Extension)
+PRGNAM=srpm
+VERSION=${VERSION:-$( ls srpm-*.tar.gz | sed 's/^srpm-//' | sed 's/.tar.gz$//' 2>/dev/null || date +'%Y.%m.%d')}
+ARCH=${ARCH:-noarch}
+BUILD=${BUILD:-1}
+TAG=${TAG:-_viel}
+PKGTYPE=${PKGTYPE:-tgz}
+
+# print package name and exit
+if [ ! -z "${PRINT_PACKAGE_NAME}" ]; then
+    echo "${PRGNAM}-${VERSION}-${ARCH}-${BUILD$TAG}.${PKGTYPE}"
+      exit 0
+fi
+
+# extract source files
+tar xvf ${CWD}/${PRGNAM}-${VERSION}.tar.?z || exit 1
+chown -R root:root .
+find -L . \
+ \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 -o -perm 511 \) \
+	-exec chmod 755 {} \; -o \
+ \( -perm 666 -o -perm 664 -o -perm 640 -o -perm 600 -o -perm 444 -o -perm 440 -o -perm 400 \) \
+	-exec chmod 644 {} \;
+
+# Make package dir if not exist.
+mkdir -p $PKG
+# Erase old package's content.
+rm -rf ${PKG}/*
+# Change to package dir.
+cd ${PKG}
+
+# install on pkg dir
+DESTDIR=${PKG} ${CWD}/install.sh
+
+# Make system structure to copy files.
+#mkdir -p ${PKG}/usr/sbin
+#mkdir -p ${PKG}/etc/srpm
+#mkdir -p ${PKG}/usr/libexec/srpm
+#mkdir -p ${PKG}/var/lib/srpm
+mkdir -p "${PKG}/install"
+
+# Copy files to package dir.
+#cp -a ${CWD}/srpm ${PKG}/usr/sbin
+#cp -a ${CWD}/srpm.config.new ${PKG}/etc/srpm
+#cp -a ${CWD}/srpm.repositories.new ${PKG}/etc/srpm
+#cp -a ${CWD}/srpm-db ${PKG}/usr/libexec/srpm
+#cp -a ${CWD}/srpm-package ${PKG}/usr/libexec/srpm
+#cp -a ${CWD}/srpm-repository ${PKG}/usr/libexec/srpm
+#cp -a ${CWD}/srpm.functions.sh ${PKG}/usr/libexec/srpm
+cp -a ${CWD}/doinst.sh ${PKG}/install/doinst.sh
+cp -a ${CWD}/slack-desc ${PKG}/install/slack-desc
+
+
+# Build the package
+cd $PKG
+/sbin/makepkg -l y -c y /tmp/srpm-$VERSION-noarch-1_Viel.txz && rm -rf ${TMPDIR}
+

@@ -4,58 +4,46 @@
 # SOURCE --> where srpm ask for. 
 # UPDATE --> If SOURCE is like "file://", like a  mirror, where we update from.
 #
-# DB ACTIVE --> all request store cache files/packages on db dir
-# DB PASSIVE --> only store minimal needed files on db (Changelog.txt,CHECKSUM.md5,CHECKSUM.md5.asc)
-#
 # SBo repository for Slackware 15.0 stable.
 REPO_SBO_NAME="sbo"
-REPO_SBO_PRIORITY="10"
+REPO_SBO_ARCH="x86_64"
 REPO_SBO_VERSION="15.0"
 REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
 REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
-REPO_SBO_SRPMVER="15.0"
-REPO_SBO_SRPMARCH="x86-64"
-REPO_SBO_DB="active"
 #
 # Slackware repository
+REPO_SLACKWARE_NUMBER="1"
 REPO_SLACKWARE_NAME="slackware"
-REPO_SLACKWARE_PRIORITY="10"
-REPO_SLACKWARE_VERSION="slackware64-15.0"
+REPO_SLACKWARE_ARCH="x86_64"
+REPO_SLACKWARE_VERSION="15.0"
 REPO_SLACKWARE_SOURCE="file:///opt/slackware-repositories/x86/slackware/slackware64-15.0"
 #REPO_SLACKWARE_UPDATE="rsync://mirrors.kernel.org/slackware/slackware64-15.0"
 #REPO_SLACKWARE_UPDATE="rsync://ftp.linux.cz/pub/linux/slackware/slackware64-15.0"
 REPO_SLACKWARE_UPDATE="rsync://ftp.acc.umu.se/mirror/slackware.com/slackware64-15.0"
-REPO_SLACKWARE_SRPMVER="15.0"
-REPO_SLACKWARE_SRPMARCH="x86-64"
-REPO_SLACKWARE_DB="passive"
-#
-## SBo repository for Slackware 15.0 stable.
-#REPO_SBO_NAME="sbo"
-#REPO_SBO_ACTIVE="true"
-#REPO_SBO_PRIORITY="10"
-#REPO_SBO_PREFIX="/slackbuilds"
-#REPO_SBO_VERSION="/15.0"
-#REPO_SBO_FTP="ftp://slackbuilds.org/slackbuilds/15.0"
-#REPO_SBO_RSYNC="rsync://slackbuilds.org/slackbuilds/15.0"
-#REPO_SBO_HTTPS="https://slackbuilds.org/slackbuilds/15.0"
-#REPO_SBO_MIRROR="rsync" # black or no for disactivate
-#REPO_SBO_LOCALMIRROR="file:///opt/slackware-repositories/slackbuilds/15.0"
-#REPO_SBO_UPDATE="rsync://slackbuilds.org/slackbuilds/15.0"
-#REPO_SBO_SOURCE="file:///opt/slackware-repositories/slackbuilds/15.0"
+
+## Slackel repo
+#REPO_SLACKEL_NAME="slackel"
+#REPO_SLACKEL_ARCH="i486"
+#REPO_SLACKEL_VERSION="current"
+#REPO_SLACKEL_SOURCE="https://slackware.uk/slackel/i486/current"
+
+## Slackel repo
+#REPO_SLACKEL_NAME="slackel"
+#REPO_SLACKEL_ARCH="x86_64"
+#REPO_SLACKEL_VERSION="current"
+#REPO_SLACKEL_SOURCE="https://slackware.uk/slackel/x86_64/current"
+
+## Alien repo 
+## CHECKSUM.md5 have all files 14.2 15.0 current, i486 x86_64
+## so filter here for version and arch 
+#REPO_ALIEN_NAME="alien"
+#REPO_ALIEN_ARCH="x86_64"
+#REPO_ALIEN_VERSION="15.0"
+#REPO_ALIEN_SOURCE="http://www.slackware.com/~alien/slackbuilds"
+
 
 ## # Ponce repository for Slackware -current.
 ## REPO_PONCE_NAME="ponce"
-## REPO_PONCE_ACTIVE="false"
-## REPO_PONCE_PRIORITY="20"
-## REPO_PONCE_GIT="https://cgit.ponce.cc/slackbuilds/plain/"
-## 
-## # Oficial repo from Slackbuilds
-## https://slackbuilds.org/slackbuilds/15.0/
-## 
-## REPO_SBO-HTTPS_NAME="sbo-https"
-## REPO_SBO-HTTPS_ACTIVE="false"
-## REPO_SBO-HTTPS_PRIORITY="30"
-## REPO_SBO-HTTPS_MIRROR="https://slackbuilds.org/slackbuilds/15.0/"
-
+## REPO_PONCE_SOURCE="https://cgit.ponce.cc/slackbuilds/plain/"
 
 # vim:sw=2:ts=2:et:

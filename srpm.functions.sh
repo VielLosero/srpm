@@ -1,19 +1,40 @@
+#!/bin/bash
+#
+## Copyright (c) 2024 VielLosero 
+#
+# The program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by 
+# the Free Software Foundation, either version 3 of the License, 
+# or (at your option) any later version.
+#
+# The program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+# See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License 
+# along with this program. If not, see <https://www.gnu.org/licenses/>. 
+#
+## Description: functions for srpm.
+## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
 
 # Repository config file
 REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
 
 # Source srpm.config to get db dir
+# load default dir
 . /etc/srpm/srpm.config || exit 1
+# no needed get from above
+#SRPM_DIR=${SRPM_DIR:-/var/lib/srpm}
 
-# Process CHECKSUM.md5 process_checksum "REPO_DIR" > sort.file
-process_checksum(){
-  DIR=$1
-grep -n txz.asc$ ${DIR}/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev |  awk '{gsub(".txz.asc"," txz",$7) ; print $0 }' 
-}
-
-# General vars
+# Needed dirs
 SRPM_DB_DIR="${SRPM_DIR}/db"
-SRPM_REPO="${SRPM_DB_DIR}/srpm"
+#SRPM_REPO="${SRPM_DB_DIR}/srpm"
+SRPM_DBFILES="${SRPM_DIR}/dbfiles"
+SRPM_HELPFILES="${SRPM_DIR}/helpfiles"
 
 # Get all diferent tags from repositories in repository config file
 # A  tag is like the repository name id in uppercase ex:(SBO,SLACKWARE)
@@ -24,10 +45,57 @@ REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 # Get repository values
 # Filter from repo config file to 
 getrepo_vars(){
+  # Repo variables
   # repository name ex:(SBO,SLACKWARE,...)
   REPO_NAME=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_NAME" | cut -d= -f2 | tr -d '"')
+  # repository architecture
+  REPO_ARCH=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_ARCH" | cut -d= -f2 | tr -d '"')
   # repository version ex:(15,slackware64_15.0,...)
   REPO_VERSION=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_VERSION" | cut -d= -f2 | tr -d '"')
+  # from where get sources
+  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
+  # source type (file:/// http:// ftp:// rsync:// git)
+  REPO_SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
+  # if repo source is a local file need repo update from where update
+  REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
+  # sanity check if no UPDATE on config take SOURCE
+  if [ -z $REPO_UPDATE ] ; then
+    REPO_UPDATE=$REPO_SOURCE
+  fi
+  #Get files from: $REPO_UPDATE"
+  REPO_UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
+  # sanity check 2 if repo update type is file can't update from that.
+  if [ "$REPO_UPDATE_TYPE" == "file" ] ; then 
+    echo "Can't update from ${TAG}: ${REPO_UPDATE}"
+    echo "Please configure a valid {http/s ftp rsync git} url in ${REPO_CONFIG_FILE}"
+  fi
+
+
+  # File variables
+  # All repos
+  DBFILE_CHECKSUMS=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.CHECKSUMS.md5
+  DBFILE_CHECKSUMS_ASC=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.CHECKSUMS.md5.asc
+  DBFILE_CHANGELOG=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.ChangeLog.txt
+  # slackware alien slakel
+  DBFILE_PACKAGES=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PACKAGES.TXT
+  #DBFILE_FILELIST=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.FILELIST.TXT
+  #DBFILE_GPGKEY=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.GPG-KEY
+  # slackware alien
+  DBFILE_MANIFEST=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.MANIFEST.bz2
+  #slackware
+  DBFILE_CHECKSUMS_PATCHES=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PATCHES.CHECKSUMS.md5
+  DBFILE_CHECKSUMS_PATCHES_ASC=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PATCHES.CHECKSUMS.md5.asc
+  #DBFILE_FILE_LIST_PATCHES=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PATCHES.FILE_LIST
+  #DBFILE_MANIFEST_PATCHES=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PATCHES.MANIFEST.bz2
+  #DBFILE_PACKAGES_PATCHES=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PATCHES.PACKAGES.TXT
+  DBFILE_CHECKSUMS_EXTRA=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.EXTRA.CHECKSUMS.md5
+  DBFILE_CHECKSUMS_EXTRA_ASC=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.EXTRA.CHECKSUMS.md5.asc
+  DBFILE_CHECKSUMS_PASTURE=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PASTURE.CHECKSUMS.md5
+  DBFILE_CHECKSUMS_PASTURE_ASC=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.PASTURE.CHECKSUMS.md5.asc
+  # slackbuilds
+  DBFILE_SLACKBUILDS=${SRPM_DBFILES}/${REPO_NAME}-${REPO_ARCH}-${REPO_VERSION}.SLACKBUILDS.TXT
+
+
   # where we store the neeeded files (like Changelog.txt ...) for fast check, or mirror link
   #REPO_DB_SOURCE="$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_DBDIR" | cut -d= -f2 | tr -d '"')/repositories/${REPO_NAME}/${REPO_VERSION}"
   REPO_DB_SOURCE="${SRPM_DIR}/repositories/${REPO_NAME}/${REPO_VERSION}"
@@ -38,26 +106,13 @@ getrepo_vars(){
   REPO_DB="${SRPM_DIR}/db/${REPO_NAME}/${REPO_VERSION}"
   # make repo dir if not exist. NOTE: not needed to check every time, put out of function
   [[ ! -d ${REPO_DB} ]] && mkdir -vp ${REPO_DB}
-  REPO_SOURCE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SOURCE" | cut -d= -f2 | tr -d '"')
-  SOURCE_TYPE="$(echo $REPO_SOURCE | cut -d: -f1 )"
-  REPO_UPDATE=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_UPDATE" | cut -d= -f2 | tr -d '"')
-  # sanity check if no UPDATE on config take SOURCE
-  if [ -z $REPO_UPDATE ] ; then
-    REPO_UPDATE=$REPO_SOURCE
-  fi
-  #echo "Get files from: $REPO_UPDATE"
-  UPDATE_TYPE="$(echo $REPO_UPDATE | cut -d: -f1 )"
-  ##### SRPM vars
-  SRPM_REPO_VER=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SRPMVER" | cut -d= -f2 | tr -d '"')
-  SRPM_REPO_ARCH=$(cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}_SRPMARCH" | cut -d= -f2 | tr -d '"')
-  SRPM_REPO_TAG=${SRPM_REPO}/${SRPM_REPO_ARCH}/${SRPM_REPO_VER}
 }
 
 
 # function that get Changelog date and number of packages inside a TAG for loop.
 get_Changelog_date_and_packages_number(){
-SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
-SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
+SOURCE_CHANGELOG_DATE="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
+SOURCE_PKGS_NUM="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
 }
 
 
@@ -151,6 +206,12 @@ get_requires(){
       FOUND=0
     fi
   done
+}
+
+# Process CHECKSUMS.md5 process_checksum "REPO_DIR" > sort.file
+process_checksum(){
+  DIR=$1
+grep -n txz.asc$ ${DIR}/CHECKSUMS.md5 | awk '{sub(":"," ",$1) ; print $1" "$2}' |  awk -F/ '{  for(i=1;i<NF;i++)  LINE=LINE$i"/" ; print LINE" "$NF ; LINE=""}'  | rev | sed 's/-/ /' |sed 's/-/ /' |sed 's/-/ /' | rev |  awk '{gsub(".txz.asc"," txz",$7) ; print $0 }' 
 }
 
 bad_signature(){

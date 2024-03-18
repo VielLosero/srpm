@@ -16,20 +16,16 @@
 # You should have received a copy of the GNU General Public License 
 # along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## srpm, - A simple repository & package manager for slackbuilds.
+## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
 
 # Get function sources.
 source /usr/libexec/srpm/srpm.functions.sh
 
-# if db not started exit
-if [ -z "$(ls -A $SRPM_DB_DIR)" -o -z "$(ls -A $SRPM_REPO)" ] ; then
-  echo "DB empty. Please first run $(basename $0) db create" 
-  exit 1
-fi
-#if [ -z "$(ls -A ${SRPM_DIR})" ] ; then
-#  echo "DB empty. Please first run $(basename $0) db create" 
-#  exit 1
-#fi
+# making/format helper file for installed packages
+ls -1 /var/lib/pkgtools/packages/ | sed 's/$/.asc/' | sed 's:^:no  ./n/a/:' > ${SRPM_HELPFILES}/INSTALLED.CHECKSUMS.md5 
 
 TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
@@ -110,6 +106,19 @@ while [ -n "$1" ] ; do
       SEARCHLIST=$@
       #echo "Searching for $SEARCHLIST"
       shift $#
+      #for PACKAGE in $SEARCHLIST ; do
+      #  echo +--------------------------------------+
+      #  grep "\.asc$" \
+      #    ${SRPM_HELPFILES}/INSTALLED.CHECKSUMS.md5 \
+      #    $SRPM_DBFILES/*.CHECKSUMS.md5 | \
+      #    grep -v "  \./source" | grep -v "  \./testing" |\
+      #    grep -v "  \./source" | grep -v "  \./testing" | grep -v "  \./patches/source/" |\
+      #    cut -d/ -f6- | sed 's: ./::g' | sed 's/.CHECKSUMS.md5:/: /' | \
+      #    cut -d" " -f1,3 | rev | sed 's:/: :' | rev | sed 's/\.asc$//' | grep "$SEARCHLIST"
+      #    #cut -d" " -f1,3 | rev | sed 's:/: :' | rev | sed 's/\.asc$//' | grep "$PACKAGE"
+      #  
+      #  echo +--------------------------------------+
+      #done
       gettags_from_config_file
       for TAG in $REPO_TAGS ; do  
         getrepo_vars
@@ -179,7 +188,7 @@ while [ -n "$1" ] ; do
               cat "${REPO_DB_SOURCE}/${FILEPATH}" | tail +9
             else
               # if no find on db try to download and show
-              case $SOURCE_TYPE in
+              case $REPO_SOURCE_TYPE in
                file)
                  SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
                  ;;
@@ -225,7 +234,7 @@ while [ -n "$1" ] ; do
             done
           done
           #    # if no find on db try to download and show
-          #    case $SOURCE_TYPE in
+          #    case $REPO_SOURCE_TYPE in
           #     file)
           #       SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
           #       ;;

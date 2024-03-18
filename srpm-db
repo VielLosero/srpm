@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License 
 # along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## srpm, - A simple repository & package manager for slackbuilds.
+## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
 
 # get functions 
 source /usr/libexec/srpm/srpm.functions.sh

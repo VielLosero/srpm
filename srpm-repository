@@ -16,22 +16,13 @@
 # You should have received a copy of the GNU General Public License 
 # along with srpm. If not, see <https://www.gnu.org/licenses/>. 
 #
-## srpm, - A simple repository & package manager for slackbuilds.
+## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
 
 source /usr/libexec/srpm/srpm.functions.sh
 
-# if db not started exit
-if [ -z "$(ls -A $SRPM_DB_DIR)" -o -z "$(ls -A $SRPM_REPO)" ] ; then
-  echo "DB empty. Please first run $(basename $0) db create" 
-  exit 1
-fi
-## Check if pkg db is started.
-#if [ -z "$(ls -A ${SRPM_DIR})" ] ; then
-#  echo "DB empty. Please first run $(basename $0) db create" 
-#  exit 1
-#fi
-
-#REPO_CONFIG_FILE=/etc/srpm/srpm.repositories
 TMPDIR=${TMPDIR:-/tmp/srpm} && [[ -d $TMPDIR ]] || mkdir -vp $TMPDIR
 
 info(){
@@ -39,164 +30,195 @@ info(){
 #REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
 gettags_from_config_file
 #clear
-echo "------------------------"
+echo "----------------------------"
 echo "- Repository information"
-echo "------------------------"
+echo "----------------------------"
 for TAG in $REPO_TAGS ; do  
   cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
-  echo "------------------------"
+  echo "----------------------------"
 done
 }
 
-check(){
-# get var (REPO_TAGS) from repositories config file
-# REPO_TAGS will contain repo id in uppercase ex:(SBO,SLACKWARE)
-gettags_from_config_file
-  echo "------------------------"
-  echo "- Repository up to date"
-  echo "------------------------"
-# process tags
-for TAG in $REPO_TAGS ; do  
-  # get vars for each repository
-  # REPO_NAME REPO_VERSION REPO_DB REPO_SOURCE SOURCE_TYPE REPO_UPDATE UPDATE_TYPE
-  # for a description of vars look into repository config file
-  getrepo_vars 
-  mkdir -p ${TMPDIR}/${REPO_NAME} 2>/dev/null
-  case $UPDATE_TYPE in
-    file)
-      SOURCE="$(echo $REPO_SOURCE | sed 's%file://%%')"
-      cp ${SOURCE}/ChangeLog.txt ${TMPDIR}/${REPO_NAME}/ChangeLog.txt
-      cp ${SOURCE}/CHECKSUMS.md5 ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5
-      cp ${SOURCE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc
-      get_Changelog_date_and_packages_number
-      #SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
-      #SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
-      ;;
-    http|https)
-      SOURCE=$(echo $REPO_SOURCE)
-      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/ChangeLog.txt
-      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/CHECKSUM.md5
-      wget -O ${TMPDIR}/${REPO_NAME}  ${SOURCE}/CHECKSUM.md5.asc
-      get_Changelog_date_and_packages_number
-      #SOURCE_UPDATED="$(curl --connect-timeout 6 -s ${SOURCE}/ChangeLog.txt | head -n1  || echo fail )"
-      #SOURCE_PKGS="$(curl --connect-timeout 6 -s ${SOURCE}/CHECKSUMS.md5 | grep slack-desc | wc -l || echo fail)"     
-      ;;
-    ftp)
-      SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
-      ;;
-    rsync)
-      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${REPO_UPDATE}/CHECKSUMS.md5 ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/  && get_Changelog_date_and_packages_number
-      #SOURCE_UPDATED="$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt  | head -1)"
-      #SOURCE_PKGS="$(grep slack-desc ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 | wc -l )"     
-      ;;
-    git)
-      SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
-      ;;
-  esac
-  # check date on db
-  DB_UPDATED=$( cat ${REPO_DB_SOURCE}/ChangeLog.txt  | head -1)
-  
-  #echo "SOURCE: $SOURCE"
-  #cat $REPO_CONFIG_FILE | grep "^REPO_${TAG}"
-  echo "NAme:          \"$REPO_NAME\""
-  echo "Source date:   \"$SOURCE_UPDATED\""
-  echo "Local db date: \"$DB_UPDATED\""
-  #gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc > /dev/null || echo "### WARNING: gpg BAD signature. ###"
-  gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc &> /dev/null || \
-    cat <<"EOF"
-  ###################################
-  ### WARNING: BAD gpg signature. ###
-  ###################################
-EOF
-  echo "------------------------"
-  #echo "SOURCE_${TAG}_PKGS=\"$REPO_PKGS\""
-done
-}
 
 update(){
-echo ""
-#get repos (tags) from repo config file 
-#REPO_TAGS=$(cat $REPO_CONFIG_FILE | grep "^REPO_" | cut -d_ -f2 | sort -u)
-gettags_from_config_file
-for TAG in $REPO_TAGS ; do  
-  # get repo var
-  getrepo_vars
-  case $UPDATE_TYPE in
+  echo "+--------------------------+"
+  #get repos (tags) from repo config file 
+  gettags_from_config_file
+  # process tags
+  for TAG in $REPO_TAGS ; do  
+    # reset update
+    UPDATE_REPO=
+    # notice the start
+    echo "Checking available updates for ${TAG}." 
+    # get vars for each repository
+    # REPO_NAME REPO_VERSION REPO_DB REPO_SOURCE REPO_SOURCE_TYPE REPO_UPDATE REPO_UPDATE_TYPE
+    # for a description of vars look into repository config file
+    getrepo_vars 
+    mkdir -p ${TMPDIR}/${REPO_NAME} 2>/dev/null
+  case $REPO_UPDATE_TYPE in
     http|https)
-      SOURCE=$(echo $REPO_UPDATE)
-      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/ChangeLog.txt
-      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5
-      wget -O ${REPO_DB_SOURCE}  ${SOURCE}/CHECKSUMS.md5.asc
-      wget -O ${REPO_DB_SOURCE}/patches  ${SOURCE}/patches/CHECKSUMS.md5
-      wget -O ${REPO_DB_SOURCE}/patches  ${SOURCE}/patches/CHECKSUMS.md5.asc
-      wget -O ${REPO_DB_SOURCE}/extra  ${SOURCE}/extra/CHECKSUMS.md5
-      wget -O ${REPO_DB_SOURCE}/extra  ${SOURCE}/extra/CHECKSUMS.md5.asc
+      # check if ChangeLog exist and show changes 
+      if [ -e $DBFILE_CHANGELOG ] ; then 
+        curl -L -s ${REPO_UPDATE}/ChangeLog.txt --output-dir ${TMPDIR}/${REPO_NAME}
+        SOURCE_CHANGELOG_DATE=$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt | head -1)
+        LOCAL_CHANGELOG_DATE=$(cat ${DBFILE_CHANGELOG} | head -1)
+        if [ "$SOURCE_CHANGELOG_DATE" != "$LOCAL_CHANGELOG_DATE" ] ; then
+          echo "New ChangeLog updates found."
+          # Show ChangeLog removing las date and separator.
+          cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt | grep -B 1000 "$LOCAL_CHANGELOG_DATE" | head -n -2
+          UPDATE_REPO=1
+        else
+          echo "Last ChangeLog date: $SOURCE_CHANGELOG_DATE"
+          echo "Nohing to do."
+          UPDATE_REPO=0
+        fi
+      else
+        # if local ChangeLog not exist update
+          UPDATE_REPO=1
+      fi
+      ####################
+      # start update repo
+      ####################
+      if [ "$UPDATE_REPO" == "1" ] ; then
+        # check signature before update
+        curl -L -s ${REPO_UPDATE}/{CHECKSUMS.md5.asc,CHECKSUMS.md5} --output-dir ${TMPDIR}/${REPO_NAME} || exit 1
+        if gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc &> /dev/null ; then
+          echo "CHECKSUMS.md5 signature ok."
+          # try to mirror http site with ... if source repo = file 
+          # wget ....
+          #####################
+          # Then update DBFILES
+          #####################
+          echo "Copying DBFILES."
+          cp ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 $DBFILE_CHECKSUMS 
+          cp ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc $DBFILE_CHECKSUMS_ASC
+          cp ${TMPDIR}/${REPO_NAME}/ChangeLog.txt $DBFILE_CHANGELOG
+          if [ "$TAG" == "SBO" ] ; then
+            curl -L -s ${REPO_UPDATE}/SLACKBUILDS.TXT -o $DBFILE_SLACKBUILDS || exit 1
+          fi
+          #####################
+          # Then make helpers
+          #####################
+          # now update db
+          echo "Making helpers files."
+          make_packages_version_db $TAG
+          make_packages_requires_db $TAG
+        fi
+      fi
       ;;
     ftp)
-      echo $REPO_UPDATE
-      SOURCE=$(echo $REPO_UPDATE | sed 's%file:/%%')
+      SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
       ;;
     rsync)
-      case "$SOURCE_TYPE" in
-        file)
-          if [ -z $(pgrep rsync) ] ; then
-            LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
-            echo "rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
-            rsync -avP --progress --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ 
-            if [ -L ${REPO_DB_SOURCE} ] ; then
-              true
-            else
-              # TODO: sanity chek if some put source file from ${REPO_DB_SOURCE} (srpm/repositories/...)
-              # don't use rm -rf because dangerouse, clean it manualy and remove dir is more safe.
-              # on a clean start that will work ... if start is not clean .... TODO
-              rmdir ${REPO_DB_SOURCE} || echo "Clean ${REPO_DB_SOURCE} and try again plz."
-              # create a symlink from mirror to db
-              ln -s ${LOCAL_MIRROR} ${REPO_DB_SOURCE}
-            fi
+      # check if there is something to update
+      rsync -aqP ${REPO_UPDATE}/ChangeLog.txt ${TMPDIR}/${REPO_NAME} || exit 1
+        # check if local ChangeLog exist and show changes 
+        if [ -e $DBFILE_CHANGELOG ] ; then 
+          SOURCE_CHANGELOG_DATE=$(cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt | head -1)
+          LOCAL_CHANGELOG_DATE=$(cat ${DBFILE_CHANGELOG} | head -1)
+          if [ "$SOURCE_CHANGELOG_DATE" != "$LOCAL_CHANGELOG_DATE" ] ; then
+            echo "New ChangeLog updates found."
+            cat ${TMPDIR}/${REPO_NAME}/ChangeLog.txt | grep -B 1000 "$LOCAL_CHANGELOG_DATE" |head -n -2
+            UPDATE_REPO=1
           else
-            echo "To many rsync run , wait a few and try again"
+            echo "Last ChangeLog date: $SOURCE_CHANGELOG_DATE"
+            echo "Nohing to do."
+            UPDATE_REPO=0
           fi
-          ;;
-        rsync)
-          cat <<"EOF"
-          rsync -avP ${REPO_UPDATE}/ChangeLog.txt \
-                     ${REPO_UPDATE}/CHECKSUMS.md5 \
-                     ${REPO_UPDATE}/CHECKSUMS.md5.asc \
-                     ${REPO_DB_SOURCE}"
-EOF
-          ;;
-      esac
+        else
+        # if local ChangeLog not exist update
+          UPDATE_REPO=1
+        fi
+        ####################
+        # start update repo
+        ####################
+        if [ "$UPDATE_REPO" == "1" ] ; then
+          # check signature before update
+          rsync -aqP ${REPO_UPDATE}/CHECKSUMS.md5 ${REPO_UPDATE}/CHECKSUMS.md5.asc ${TMPDIR}/${REPO_NAME}/ || exit 1
+          if gpg --verify  ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc &> /dev/null ; then
+            echo "CHECKSUMS.md5 signature ok."
+            # CHECKSUM signature ok update
+            case "$REPO_SOURCE_TYPE" in
+              # local repo 
+              file)
+                # Check if there is more than 1 rsync work
+                if [ -z $(pgrep rsync) ] ; then
+                  # Remove file:// from repo source 
+                  #REPO_SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
+                  LOCAL_MIRROR=$(echo $REPO_SOURCE | sed 's%file://%%')
+                  # check if local mirror link is set
+                  if [ -L ${REPO_DB_SOURCE} ] ; then
+                    true
+                  else
+                    # TODO: sanity chek if some put source file from ${REPO_DB_SOURCE} (srpm/repositories/...)
+                    # don't use rm -rf because dangerouse, clean it manualy and remove dir is more safe.
+                    # on a clean start that will work ... if start is not clean .... TODO
+                    rmdir ${REPO_DB_SOURCE} || echo "Clean ${REPO_DB_SOURCE} and try again plz."
+                    # create a symlink from mirror to db
+                    ln -s ${LOCAL_MIRROR} ${REPO_DB_SOURCE}
+                  fi
+                  # update repo after link 
+                  echo "Updating silent: rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
+                  rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ || exit 1
+                else
+                  echo "To many rsync run , wait a few and try again"
+                fi
+                #####################
+                # Then update DBFILES
+                #####################
+                echo "Copying DBFILES."
+                cp ${LOCAL_MIRROR}/CHECKSUMS.md5 $DBFILE_CHECKSUMS 
+                cp ${LOCAL_MIRROR}/CHECKSUMS.md5.asc $DBFILE_CHECKSUMS_ASC
+                cp ${LOCAL_MIRROR}/ChangeLog.txt $DBFILE_CHANGELOG
+                if [ "$TAG" == "SBO" ] ; then
+                  cp ${LOCAL_MIRROR}/SLACKBUILDS.TXT $DBFILE_SLACKBUILDS
+                fi
+                #####################
+                # Then make helpers
+                #####################
+                # now update db
+                echo "Making helpers files."
+                make_packages_version_db $TAG
+                make_packages_requires_db $TAG
+                ;;
+              # no local repo then copy files only
+              rsync)
+                #####################
+                # Then update DBFILES
+                #####################
+                echo "Copying DBFILES."
+                cp ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5 $DBFILE_CHECKSUMS 
+                cp ${TMPDIR}/${REPO_NAME}/CHECKSUMS.md5.asc $DBFILE_CHECKSUMS_ASC
+                cp ${TMPDIR}/${REPO_NAME}/ChangeLog.txt $DBFILE_CHANGELOG
+                if [ "$TAG" == "SBO" ] ; then
+                  rsync -avP ${REPO_UPDATE}/SLACKBUILDS.TXT $DBFILE_SLACKBUILDS || exit 1
+                fi
+                #####################
+                # Then make helpers
+                #####################
+                # now update db
+                echo "Making helpers files."
+                make_packages_version_db $TAG
+                make_packages_requires_db $TAG
+                ;;
+            esac
+          else
+            # signature not ok
+            echo "###################################"
+            echo "### WARNING: BAD gpg signature. ###"
+            echo "###################################"
+            echo "+--------------------------+"
+          fi
+        fi
       ;;
     git)
-      echo $REPO_UPDATE
-      SOURCE=$(echo $REPO_UPDATE | sed 's%file:/%%')
+      SOURCE=$(echo $REPO_SOURCE | sed 's%file://%%')
       ;;
   esac
-  #  after update verify signature
-  gpg --verify "${REPO_DB_SOURCE}/CHECKSUMS.md5.asc" "${REPO_DB_SOURCE}/CHECKSUMS.md5"
-  #check md5sum of ChangeLog.txt
-  #tail +13 CHECKSUMS.md5 | md5sum -c --quiet -
-
-done
-echo "Remember to update version after each good update.!!"
-}
-
-#recreate packages versions on db.
-versions(){ 
-gettags_from_config_file
-for TAG in $REPO_TAGS ; do  
-  getrepo_vars
-  # now update db
-  make_packages_version_db $TAG
-  make_packages_requires_db $TAG
-  # update new dbfiles
-  # SRPM_DB_FILES="${SRPM_DIR}/dbfiles"
-  # Process CHECKSUM.md5 process_checksum "REPO_DIR" > sort.file
-  echo "Process new db files CHECKSUM"
-  process_checksum ${REPO_DB_SOURCE} > $SRPM_DB_FILES/Checksum.txt
+  
+  echo "+--------------------------+"
 done
 }
-
 
 while [ -n "$1" ] ; do
   case $1 in  
@@ -204,19 +226,9 @@ while [ -n "$1" ] ; do
       shift
       info
       ;;
-    check)
-      shift
-      check
-      ;;
     update)
       shift
       update
-      # for late delete versions and do it auto from here after update, for test now leave separated
-      # update_versions
-      ;;
-    versions)
-      shift
-      versions
       ;;
     select)
       ;;

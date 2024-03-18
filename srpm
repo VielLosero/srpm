@@ -16,10 +16,22 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>. 
 #
 ## srpm, - A simple repository & package manager for Slackware Linux.
+#
+# Slackware® is a Registered Trademark of Patrick Volkerding. 
+# Linux® is a Registered Trademark of Linus Torvalds.
 
 # version
-VERSION=0.1.16
+VERSION=0.1.17
 
+# check for srpm needed files
+# load functions
+source /usr/libexec/srpm/srpm.functions.sh
+# Check for needed tools
+type curl wget gpg2 grep cut awk >/dev/null || exit 1
+# Check if needed dirs exist
+[[ ! -e $SRPM_DB_DIR ]] && mkdir -vp $SRPM_DB_DIR
+[[ ! -e $SRPM_DBFILES ]]  && mkdir -vp $SRPM_DBFILES
+[[ ! -e $SRPM_HELPFILES ]] && mkdir -vp $SRPM_HELPFILES
 
 # Now process args.
 CMD=""
@@ -66,14 +78,6 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=repository-update
           ;;
-        c|check)
-          shift
-          CMD=repository-check
-          ;;
-        v|versions)
-          shift
-          CMD=repository-versions
-          ;;
       esac
       shift $#
       ;;
@@ -85,16 +89,6 @@ while [ -z "$CMD" ] ; do
     -ru|-rupdate|repository-update)
       shift
       CMD=repository-update
-      shift $#
-      ;;
-    -rc|-rcheck|repository-check)
-      shift
-      CMD=repository-check
-      shift $#
-      ;;
-    -rv|-rversions|repository-versions)
-      shift
-      CMD=repository-versions
       shift $#
       ;;
     -p|pkg|package)
@@ -218,6 +212,14 @@ while [ -z "$CMD" ] ; do
   esac
 done
 
+# if srpm dbfiles not started notice run update first
+if [ -z "$(ls -A $SRPM_DBFILES)" ] ; then
+#if [ -z "$(ls -A $SRPM_HELPFILES)" -o -z "$(ls -A $SRPM_DBFILES)" ] ; then
+  if [ "$CMD" != "repository-update" ] ; then
+    echo "DB empty. Please run first $(basename $0) repo update." 
+    exit 0
+  fi
+fi
 
 # Case with comamnd
 case "$CMD" in
@@ -235,12 +237,6 @@ case "$CMD" in
     ;;
   repository-update)
     /usr/libexec/srpm/srpm-repository update
-    ;;
-  repository-check)
-    /usr/libexec/srpm/srpm-repository check
-    ;;
-  repository-versions)
-    /usr/libexec/srpm/srpm-repository versions
     ;;
   package-install)
     /usr/libexec/srpm/srpm-package install $@

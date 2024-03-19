@@ -21,7 +21,7 @@
 # Linux® is a Registered Trademark of Linus Torvalds.
 
 # version
-VERSION=0.1.17
+VERSION=0.1.18
 
 # check for srpm needed files
 # load functions

@@ -53,5 +53,3 @@ DESTDIR=${DESTDIR:-}
   fi
 
 
-
-

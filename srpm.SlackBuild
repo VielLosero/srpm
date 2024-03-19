@@ -26,15 +26,11 @@ set -e
 
 # Sanity check, change to dir on this SlackBuild script are with the sources.
 cd $(dirname $0) ; CWD=$(pwd)
-# Temp dir.
-TMP=${TMP:-/tmp}
-# Where to build the package.
-PKG=$TMP/package-srpm
 
 # (Package name)-(Major version).(Minor version).(Revision number)-(arch)-(Build number)_(Tag).(Extension)
 # or (Package name)-(Year).(Month).(Day)-(arch)-(Build number)_(Tag).(Extension)
 PRGNAM=srpm
-VERSION=${VERSION:-$( ls srpm-*.tar.gz | sed 's/^srpm-//' | sed 's/.tar.gz$//' 2>/dev/null || date +'%Y.%m.%d')}
+VERSION=${VERSION:-$( ls ${PRGNAM}-*.tar.gz | sed "s/^${PRGNAM}-//" | sed 's/.tar.gz$//' 2>/dev/null || echo '0.1.19')}
 ARCH=${ARCH:-noarch}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_viel}
@@ -46,8 +42,20 @@ if [ ! -z "${PRINT_PACKAGE_NAME}" ]; then
       exit 0
 fi
 
+# Temp dir. Where to work, extract files and make.
+TMP=${TMP:-/tmp}
+# Where to build the package.
+PKG=$TMP/package-${PRGNAM}
+# Where to put the created package
+OUTPUT=${OUTPUT:-/tmp}
+
+# Make temp dir if not exist.
+mkdir -p $TMP
+# Change to temp dir to extract sources.
+cd $TMP
 # extract source files
 tar xvf ${CWD}/${PRGNAM}-${VERSION}.tar.?z || exit 1
+cd ${PRGNAM}-${VERSION} || exit 1
 chown -R root:root .
 find -L . \
  \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 -o -perm 511 \) \
@@ -59,20 +67,22 @@ find -L . \
 mkdir -p $PKG
 # Erase old package's content.
 rm -rf ${PKG}/*
+
+# install on pkg dir
+#DESTDIR=${PKG} ${TMP}/${PRGNAM}-${VERSION}/install.sh
+DESTDIR=${PKG} ./install.sh
+
 # Change to package dir.
 cd ${PKG}
 
-# install on pkg dir
-DESTDIR=${PKG} ${CWD}/install.sh
-
-# Make system structure to copy files.
+# Make system structure to copy files. Now with install.sh.
 #mkdir -p ${PKG}/usr/sbin
 #mkdir -p ${PKG}/etc/srpm
 #mkdir -p ${PKG}/usr/libexec/srpm
 #mkdir -p ${PKG}/var/lib/srpm
 mkdir -p "${PKG}/install"
 
-# Copy files to package dir.
+# Copy files to package dir. Now with install.sh.
 #cp -a ${CWD}/srpm ${PKG}/usr/sbin
 #cp -a ${CWD}/srpm.config.new ${PKG}/etc/srpm
 #cp -a ${CWD}/srpm.repositories.new ${PKG}/etc/srpm
@@ -86,5 +96,7 @@ cp -a ${CWD}/slack-desc ${PKG}/install/slack-desc
 
 # Build the package
 cd $PKG
-/sbin/makepkg -l y -c y /tmp/srpm-$VERSION-noarch-1_Viel.txz && rm -rf ${TMPDIR}
+# Make package output if not exist.
+mkdir -p ${OUTPUT}
+/sbin/makepkg -l y -c y ${OUTPUT}/srpm-$VERSION-noarch-1_Viel.txz
 

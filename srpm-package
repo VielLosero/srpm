@@ -165,6 +165,16 @@ while [ -n "$1" ] ; do
       #
 
       ;;
+    block)
+      shift
+      # add package to slackpkg black-list 
+      ;;
+    upgrade)
+      shift
+      # use slackpkg to update upgrade system.
+      slackpkg -batch=on -default_answer=y update && slackpkg -batch=on -default_answer=y upgrade-all
+
+      ;;
     search-file)
       shift
       ;;

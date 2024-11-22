@@ -158,8 +158,10 @@ update(){
                     ln -s ${LOCAL_MIRROR} ${REPO_DB_SOURCE}
                   fi
                   # update repo after link 
-                  echo "Updating silent: rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
-                  rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ || exit 1
+                  #echo "Updating silent: rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
+                  #rsync -aqP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ || exit 1
+                  echo "Updating verbose: rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/" 
+                  rsync -avP --delete ${REPO_UPDATE}/ ${LOCAL_MIRROR}/ || exit 1
                 else
                   echo "To many rsync run , wait a few and try again"
                 fi

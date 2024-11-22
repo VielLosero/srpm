@@ -106,6 +106,14 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=package-search
           ;;
+        b|block)
+          shift
+          CMD=package-black-list
+          ;;
+        u|upgrade)
+          shift
+          CMD=package-upgrade
+          ;;
         sf|search-file)
           shift
           CMD=package-search-file
@@ -118,7 +126,7 @@ while [ -z "$CMD" ] ; do
           shift
           CMD=package-needed
           ;;
-        u|up|unattended)
+        un|unattended)
           shift
           CMD=package-unattended
           ;;
@@ -153,6 +161,14 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-search
       ;;
+    -pb|package-block) 
+      shift
+      CMD=package-search
+      ;;
+    -pu|package-upgrade) 
+      shift
+      CMD=package-search
+      ;;
     -psf|package-search-file) 
       shift
       CMD=package-search-file
@@ -169,7 +185,7 @@ while [ -z "$CMD" ] ; do
       shift
       CMD=package-needed-version
       ;;
-    -pu|package-unattended) 
+    -pun|package-unattended) 
       shift
       CMD=package-unattended
       ;;
@@ -199,10 +215,11 @@ while [ -z "$CMD" ] ; do
       #CMD=NULL
       echo ""
       echo "Usage:"
-      echo "      $(basename $0) {-r|repo|reposiroty} {i|info c|check u|update v|versions}"
+      echo "      $(basename $0) {-r|repo|reposiroty} {i|info u|update}"
       echo "      $(basename $0) {-p|pkg|package} {i|install r|remove s|search}"
+      echo "      $(basename $0)                  {b|block u|upgrade}"
       echo "      $(basename $0)                  {d|description sf|search-file}"
-      echo "      $(basename $0)                  {n|needed u|unattended m|mirror}"
+      echo "      $(basename $0)                  {n|needed un|unattended m|mirror}"
       echo "      $(basename $0)                  {l|locate v|version f|forced} PATTERN|PACKAGE"
       echo "      $(basename $0) {-d|db|database} {c|create u|update d|delete}"
       echo "      $(basename $0) {-v|version}"
@@ -246,6 +263,12 @@ case "$CMD" in
     ;;
   package-search)
     /usr/libexec/srpm/srpm-package search $@
+    ;;
+  package-block)
+    /usr/libexec/srpm/srpm-package block $@
+    ;;
+  package-upgrade)
+    /usr/libexec/srpm/srpm-package upgrade $@
     ;;
   package-seach-file)
     /usr/libexec/srpm/srpm-package search-file $@ 
